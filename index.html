@@ -1,0 +1,1399 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>EduNotes</title>
+<meta name="description" content="EduNotes – رصد النقط والملاحظات في ملفات مسار للمراقبة المستمرة">
+<meta name="theme-color" content="#0b5f6b">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EduNotes">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+</head>
+<body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap">
+<script src="jszip.min.js"></script>
+<style>
+/* Layout: same language as EduGesti. Teal banner header with gold rule, light greenish content area (dark teal in dark mode), RTL throughout, three numbered steps. */
+:root {
+  --bg1: #f3f8f5; --bg2: #e3ede8; --card: #ffffff; --ink: #12363c; --soft: #4b6f75;
+  --line: #d3e3dc; --field: #ffffff; --field-line: #b7cdc5;
+  --hi: #0e7c86; --hi2: #0a6570; --bar: #0b5f6b; --bar2: #0a4f5a; --gold: #c9a24a; --cream: #f1e4c3;
+  --note-bg: #f6efd9; --note-fg: #5e4500; --ok: #0c6b4b; --warn: #9a6200; --err: #b42318;
+  --soft-btn: #cde3dc; --soft-btn-line: #a9c8bf; --soft-btn-fg: #083c46;
+  --font: Cairo, Tahoma, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { direction: rtl; color-scheme: light; }
+body {
+  direction: rtl; text-align: right;
+  background: #ffffff;
+  color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.7; min-height: 100vh;
+  padding-block: 0 56px;
+}
+.in { max-width: 1100px; margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.topbar { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='white' stroke-opacity='.1' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 14c6-3 12-3 18 0v20c-6-3-12-3-18 0zM26 14c6-3 12-3 18 0v20c-6-3-12-3-18 0z'/%3E%3Cpath d='M72 42l-3 9 9-3 22-22-6-6zM91 23l6 6'/%3E%3Crect x='8' y='76' width='44' height='12' rx='2'/%3E%3Cpath d='M16 76v5M24 76v7M32 76v5M40 76v7M48 76v5'/%3E%3Cpath d='M66 86l20-9 20 9-20 9zM74 90v8c4 4 28 4 32 0v-8'/%3E%3C/svg%3E"), linear-gradient(90deg, var(--bar), var(--bar2)); border-bottom: 2px solid var(--cream); box-shadow: 0 3px 14px #0006; color: #fff; }
+.topbar .in { display: flex; align-items: center; gap: 14px; padding-block: 14px; }
+.logo { width: 46px; height: 46px; border-radius: 13px; background: linear-gradient(145deg, #0e7c86, #0a4f5a); display: grid; place-items: center; flex: none; box-shadow: 0 4px 14px #0006, inset 0 0 0 1px #ffffff26; }
+.logo svg { width: 28px; height: 28px; fill: none; stroke: var(--cream); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bt { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.bs { color: var(--cream); font-size: 14px; margin-top: 1px; white-space: nowrap; }
+main.in { padding-block: 22px 0; display: flex; flex-direction: column; gap: 18px; }
+.lead { color: var(--soft); margin: 0; max-width: 68ch; }
+section { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 3px 12px #0b4a5414; padding: 16px 18px; min-width: 0; }
+.step { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+.step b { font-variant-numeric: tabular-nums; color: #fff; background: linear-gradient(135deg, var(--hi), var(--hi2)); font-weight: 700; font-size: 14px; border-radius: 50%; min-width: 28px; height: 28px; display: inline-grid; place-items: center; }
+.step h2 { margin: 0; font-size: 19px; font-weight: 700; position: relative; padding-inline-start: 12px; }
+.step h2::before { content: ""; position: absolute; inset-inline-start: 0; top: .22em; bottom: .22em; width: 4px; border-radius: 4px; background: var(--gold); }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.btn { background: linear-gradient(135deg, var(--hi), var(--hi2)); color: #fff; border: 0; border-radius: 12px; padding: 10px 18px; font-weight: 700; box-shadow: 0 3px 10px #0b4a5440; transition: transform .1s; }
+.btn:active { transform: scale(.98); }
+.btn.ghost[aria-pressed="true"] { background: linear-gradient(135deg, var(--hi), var(--hi2)); color: #fff; border-color: var(--gold); box-shadow: 0 3px 10px #0b4a5440; }
+.btn.ghost[aria-pressed="true"]::before { content: "\2713\00a0"; }
+.opts select { border: 1px solid var(--field-line); background: var(--field); color: var(--ink); border-radius: 12px; padding: 7px 12px; width: 100%; max-width: 240px; }
+.opts select:focus { border-color: var(--hi); box-shadow: 0 0 0 3px #0e7c8624; outline: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.btn.ghost { background: var(--soft-btn); color: var(--soft-btn-fg); border: 1px solid var(--soft-btn-line); box-shadow: none; font-weight: 600; padding: 7px 14px; font-size: 14px; }
+.drop { border: 1.5px dashed var(--field-line); border-radius: 14px; padding: 14px 16px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.drop.over { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 12%, transparent); }
+.drop .name { font-weight: 700; overflow-wrap: anywhere; min-width: 0; direction: ltr; unicode-bidi: embed; }
+.muted { color: var(--soft); }
+.tag { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 99px; padding: 1px 10px; background: var(--note-bg); color: var(--note-fg); }
+.rules { display: flex; flex-direction: column; gap: 6px; }
+.rule, .rulehead { display: grid; grid-template-columns: 84px minmax(0, 1fr) 34px; gap: 8px; align-items: center; }
+.rulehead { font-size: 13px; color: var(--soft); }
+.rule input, .opts input[type=number], .opts input[type=text] { border: 1px solid var(--field-line); background: var(--field); color: var(--ink); border-radius: 12px; padding: 7px 12px; min-width: 0; width: 100%; }
+.rule input:focus, .opts input:focus { border-color: var(--hi); box-shadow: 0 0 0 3px #0e7c8624; outline: none; }
+.rule input.num { font-variant-numeric: tabular-nums; direction: ltr; text-align: center; }
+.rule input.txt { font-weight: 700; }
+.rule .x { background: transparent; border: 0; color: var(--soft); font-size: 20px; border-radius: 10px; height: 34px; }
+.rule .x:hover { color: var(--err); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.opts { display: flex; flex-direction: column; gap: 14px; }
+.opts label.field { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--soft); }
+.opts input[type=number], .opts input[type=text] { max-width: 240px; }
+.chk { display: flex; gap: 10px; align-items: center; cursor: pointer; background: color-mix(in srgb, var(--hi) 7%, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; }
+.chk input { width: 20px; height: 20px; accent-color: var(--hi); flex: none; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { display: inline-flex; gap: 8px; align-items: center; border: 1.5px solid var(--field-line); border-radius: 999px; padding: 4px 14px; cursor: pointer; background: var(--field); }
+.chip:has(input:checked) { background: var(--hi); border-color: var(--gold); color: #fff; }
+.chip input { accent-color: var(--gold); width: 16px; height: 16px; }
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; background: var(--card); }
+th, td { padding: 7px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 700; font-size: 13.5px; color: #fff; background: var(--bar); position: sticky; top: 0; }
+td.n { direction: ltr; text-align: center; }
+td.idx { color: var(--soft); width: 1%; }
+td.avg { font-weight: 700; direction: ltr; text-align: center; }
+td.note { min-width: 200px; }
+td.note input { width: 100%; border: 1px solid transparent; background: var(--note-bg); color: var(--note-fg); font-weight: 700; border-radius: 10px; padding: 4px 12px; }
+td.note input:focus { border-color: var(--gold); outline: none; }
+td.note input.keep { background: transparent; color: var(--soft); font-weight: 400; border-color: var(--line); }
+td.note input.none { background: transparent; }
+.lv0 { --lb: #d6f1e3; --lf: #0b6a45; } .lv1 { --lb: #e4f3d1; --lf: #43690f; } .lv2 { --lb: #d4eff0; --lf: #0b6470; }
+.lv3 { --lb: #d9e8fb; --lf: #1b4f93; } .lv4 { --lb: #fde0cc; --lf: #b0470a; } .lv5 { --lb: #fbd9d5; --lf: #b42318; }
+td.note input[class*="lv"] { background: var(--lb); color: var(--lf); }
+td.note input.keep[class*="lv"] { border-color: var(--lf); font-weight: 600; }
+td.avg.t0 { color: #0b6a45; } td.avg.t1 { color: #43690f; } td.avg.t2 { color: #0b6470; } td.avg.t3 { color: #1b4f93; } td.avg.t4 { color: #b0470a; } td.avg.t5 { color: #b42318; }
+.legend { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.legend:empty { display: none; }
+.lgc { background: var(--lb); color: var(--lf); font-weight: 700; font-size: 13px; border-radius: 99px; padding: 1px 12px; }
+.bar { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.msg { font-size: 14.5px; min-width: 0; }
+.msg.ok { color: var(--ok); } .msg.warn { color: var(--warn); } .msg.err { color: var(--err); }
+.dev { margin-top: 10px; padding: 16px 6px 4px; border-top: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; color: var(--soft); font-size: 14px; }
+.dev b { color: var(--gold); font-weight: 700; font-size: 16px; }
+.dev b.mm { font-size: 19px; letter-spacing: 1px; font-family: "Segoe UI", Arial, sans-serif; direction: ltr; }
+.dev .dvl { width: 44px; height: 1.5px; background: var(--gold); border-radius: 2px; margin-bottom: 4px; }
+.dev .dvi { width: 22px; height: 22px; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 2px; }
+.dev .dvf { font-size: 12.5px; opacity: .85; letter-spacing: .4px; font-family: "Segoe UI", Arial, sans-serif; direction: ltr; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.tabs:empty { display: none; }
+.ctab { display: inline-flex; align-items: stretch; border: 1.5px solid var(--field-line); border-radius: 12px; background: var(--field); overflow: hidden; }
+.ctab.on { background: var(--hi); border-color: var(--gold); color: #fff; }
+.ct-main { background: transparent; border: 0; padding: 6px 14px; text-align: right; line-height: 1.3; font-weight: 700; }
+.ct-main .cc { direction: ltr; unicode-bidi: embed; display: inline-block; }
+.ct-main small { display: block; font-weight: 400; font-size: 11.5px; opacity: .85; }
+.ct-x { background: transparent; border: 0; border-inline-start: 1px solid var(--line); padding: 0 12px; color: var(--soft); font-size: 17px; }
+.ctab.on .ct-x { color: #fff; border-color: #ffffff40; }
+.ct-x:hover { color: var(--err); }
+.ctab.on .ct-x:hover { color: #ffd2cc; }
+.ct-x.pend { background: var(--err); color: #fff; font-size: 13px; font-weight: 700; }
+.kp { position: fixed; inset: 0; z-index: 50; background: #f3f8f5; height: 100vh; height: 100dvh; overflow: hidden; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.kp-in { max-width: 520px; height: 100%; margin: 0 auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.kp-top { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--bar), var(--bar2)); color: #fff; border-radius: 12px; padding: 5px 12px; line-height: 1.35; }
+.kp-top b { direction: ltr; unicode-bidi: embed; }
+.kp-top small { display: block; color: var(--cream); font-size: 12px; }
+.kp-close { background: #ffffff22; color: #fff; border: 1px solid #ffffff55; border-radius: 10px; padding: 4px 14px; font-weight: 700; flex: none; }
+#kpPick { overflow-y: auto; flex: 1; min-height: 0; }
+.kp-h { font-weight: 700; font-size: 16px; }
+.kp-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.kp-col { background: #fff; border: 1.5px solid var(--line); border-radius: 14px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 84px; }
+.kp-col b { font-size: 16px; line-height: 1.3; }
+.kp-col small { font-size: 12.5px; color: var(--soft); }
+.kp-col.sug { border: 2.5px solid var(--hi); }
+.kp-col.full small { color: var(--ok); }
+.kp-msg { color: var(--ok); font-weight: 600; }
+.kp-msg:empty { display: none; }
+.kp-ask { background: var(--note-bg); color: var(--note-fg); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; font-weight: 600; }
+.kp-pad { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.kp-colbar { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--hi); color: #fff; border-radius: 10px; padding: 4px 10px; font-size: 14px; }
+.kp-cb { display: flex; gap: 6px; flex: none; }
+.kp-colbar button { background: transparent; color: var(--cream); border: 1px solid #ffffff66; border-radius: 9px; padding: 1px 10px; font-size: 13px; }
+.kp-colbar button[aria-pressed="true"] { background: #ffffff33; color: #fff; }
+.kp-body { flex: 1; min-height: 0; display: flex; gap: 14px; }
+.kp-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.kp-list { display: none; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow-y: auto; padding: 4px; }
+.kp-pad.showlist .kp-list { display: block; flex: 1; }
+.kp-pad.showlist .kp-main { display: none; }
+.kp-li { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; background: transparent; border: 0; border-radius: 9px; padding: 6px 10px; text-align: right; font-size: 14.5px; }
+.kp-li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.kp-li i { font-style: normal; color: var(--soft); margin-inline-end: 6px; font-variant-numeric: tabular-nums; }
+.kp-li b { direction: ltr; font-variant-numeric: tabular-nums; flex: none; }
+.kp-li.miss { background: #fbd9d5; color: #b42318; margin-top: 2px; }
+.kp-li.ab b { color: var(--warn); font-size: 12.5px; }
+.kp-li.cur { outline: 2.5px solid var(--hi); background: #d4eff0; color: var(--ink); }
+.kp-card { flex: none; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px; }
+.kp-stu { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.kp-name { font-size: 19px; font-weight: 700; line-height: 1.3; }
+.kp-meta { font-size: 12.5px; color: var(--soft); text-align: right; }
+.kp-val { flex: none; min-width: 110px; border: 2.5px solid var(--hi); border-radius: 12px; text-align: center; font-size: 32px; font-weight: 700; line-height: 50px; padding: 0 10px; font-variant-numeric: tabular-nums; }
+.kp-val.empty { color: var(--soft); }
+.kp-val.abs { color: var(--warn); font-size: 17px; }
+.kp-val.shake { animation: kpsh .25s; border-color: var(--err); }
+@keyframes kpsh { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.kp-prog { height: 5px; background: var(--bg2); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+.kp-prog i { display: block; height: 100%; background: var(--hi); width: 0; transition: width .2s; }
+.kp-err { color: var(--err); font-size: 13px; min-height: 1.25em; text-align: center; line-height: 1.25; margin-top: 2px; }
+.kp-keys { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 6px; }
+.kp-keys button { background: #fff; border: 1px solid var(--field-line); border-radius: 12px; font-size: 24px; font-weight: 700; min-height: 0; padding: 0; touch-action: manipulation; }
+.kp-keys button:active { background: var(--soft-btn); }
+.kp-keys .fr, .kp-keys .bk { font-size: 17px; background: var(--soft-btn); color: var(--soft-btn-fg); }
+.kp-act { flex: none; display: grid; grid-template-columns: 1fr 1fr 1.7fr; gap: 6px; }
+.kp-act button { border-radius: 12px; border: 1px solid var(--field-line); background: #fff; font-weight: 700; font-size: 13.5px; height: 52px; padding: 2px 4px; line-height: 1.25; touch-action: manipulation; }
+.kp-act .ok { background: linear-gradient(135deg, var(--hi), var(--hi2)); color: #fff; border: 0; font-size: 19px; }
+.kp-act .ab { color: var(--warn); }
+.kp-act button:disabled { opacity: .4; }
+.kp-next { flex: none; text-align: center; color: var(--soft); font-size: 13px; line-height: 1.3; }
+.kp-hint { display: none; }
+.kp-prev { display: none; }
+.kp-prv { display: none; }
+.kp-grid { flex: 1; min-height: 0; display: grid; gap: 6px; grid-auto-rows: minmax(0, 1fr); }
+.kp-grid button { background: #fff; border: 1px solid var(--field-line); border-radius: 12px; font-size: 30px; font-weight: 700; min-height: 0; padding: 0; touch-action: manipulation; font-variant-numeric: tabular-nums; color: var(--ink); }
+.kp-grid button:active { background: var(--soft-btn); }
+.kp-grid button.sel { background: var(--hi); color: #fff; border-color: var(--hi); }
+.kp-grid button.dis { opacity: .3; }
+.kp-act { display: none; }
+@media (max-height: 640px) { .kp-name { font-size: 17px; } .kp-val { font-size: 26px; line-height: 42px; } .kp-act button { height: 46px; } }
+@media (min-width: 900px) {
+  /* desktop: one large pad centred on the screen; the pupils list opens from the ⋮ menu */
+  .kp-in { max-width: 820px; padding: 18px 24px; gap: 10px; }
+  .kp-top { padding: 10px 18px; } .kp-top b { font-size: 18px; }
+  .kp-colbar { padding: 8px 12px 8px 8px; font-size: 17px; }
+  .kp-li { font-size: 15.5px; padding: 8px 14px; cursor: pointer; }
+  .kp-li:hover { background: color-mix(in srgb, var(--hi) 10%, transparent); }
+  .kp-pad.showlist .kp-list { max-width: 640px; margin: 0 auto; width: 100%; }
+  .kp-main { gap: 10px; }
+  .kp-card { padding: 12px 20px 8px; }
+  .kp-grid { gap: 10px; }
+  .kp-grid button { font-size: 40px; border-radius: 16px; }
+  .kp-grid.frac button[data-n] { font-size: 30px; }
+  .kp-grid button.fb { font-size: 24px; }
+  .kp-grid .frc button { font-size: 20px; }
+  .kp-bot button, .kp-absch button { height: 58px; font-size: 18px; }
+  .kp-act { display: none; }
+  .kp-hint { display: block; text-align: center; color: var(--soft); font-size: 13px; }
+  .kp-pad.showlist .kp-prev { display: none; }
+  .kp-body { flex: 1; min-height: 0; }
+  .kp-main.rulerm { display: grid; grid-template-columns: 3fr 2fr; grid-template-areas: "card card" "grid grid" "fr bot" "hint hint"; gap: 10px; align-content: center; }
+  .kp-main.rulerm > .kp-card { grid-area: card; padding: 6px 20px; }
+  .kp-main.rulerm .kp-name { font-size: 28px; }
+  .kp-main.rulerm > .kp-grid { grid-area: grid; flex: none; grid-auto-rows: clamp(60px, 11vh, 150px); }
+  .kp-main.rulerm > .kp-fr { grid-area: fr; }
+  .kp-main.rulerm > .kp-bot, .kp-main.rulerm > .kp-absch { grid-area: bot; }
+  .kp-main.rulerm > .kp-hint { grid-area: hint; }
+  .rulerm .kp-fr button, .rulerm .kp-bot button, .rulerm .kp-absch button { height: 52px; font-size: 18px; }
+  .kp-grid.ruler button { font-size: clamp(34px, 4.5vh, 52px); }
+  .kp-grid.ruler.frac button[data-n] { font-size: 26px; }
+  .kp-prv { display: block; color: var(--soft); font-size: 14px; }
+  .kp-name { font-size: 34px; }
+  .kp-prev { margin-top: auto; }
+  .kp-prev { display: flex; flex-direction: column; gap: 4px; flex: none; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px 8px; }
+  .kp-prev-h { flex: none; font-weight: 700; color: var(--soft); font-size: 12.5px; }
+  .kp-prev-g { max-height: 64px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); grid-auto-rows: 28px; gap: 4px; }
+  .kp-pc { display: flex; justify-content: space-between; align-items: center; gap: 4px; border: 0; border-radius: 7px; padding: 0 7px; font-size: 12.5px; cursor: pointer; min-width: 0; }
+  .kp-pc i { font-style: normal; opacity: .75; font-variant-numeric: tabular-nums; }
+  .kp-pc b { direction: ltr; font-variant-numeric: tabular-nums; }
+  .kp-pc.ok { background: #d6f1e3; color: #0b6a45; }
+  .kp-pc.ms { background: #fbd9d5; color: #b42318; }
+  .kp-pc.ab { background: var(--note-bg); color: var(--note-fg); }
+  .kp-pc.cur { outline: 2px solid var(--hi); outline-offset: 1px; background: #d4eff0; color: var(--ink); }
+}
+td.n.miss { background: #fbd9d5; }
+td.n.ab { color: var(--warn); font-size: 12px; }
+.drop { flex-direction: column; align-items: stretch; gap: 10px; background: var(--card); border-style: solid; border-color: var(--line); }
+.sec-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sec-h h2 { margin: 0; font-size: 19px; }
+.small { font-size: 13.5px; }
+.tabs { margin-bottom: 0; }
+.acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 760px) { .acts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.act { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; box-shadow: 0 3px 12px #0b4a5414; min-height: 78px; justify-content: center; }
+.act b { font-size: 15.5px; display: flex; align-items: center; gap: 6px; }
+.act .no { background: linear-gradient(135deg, var(--hi), var(--hi2)); color: #fff; border-radius: 50%; width: 24px; height: 24px; display: inline-grid; place-items: center; font-size: 13px; flex: none; }
+.act .no.gear { background: var(--soft-btn); color: var(--soft-btn-fg); }
+.act small { color: var(--soft); font-size: 12.5px; line-height: 1.4; }
+.act.on { border-color: var(--hi); background: color-mix(in srgb, var(--hi) 8%, var(--card)); }
+#kpOpen { border-color: var(--gold); }
+.panel .opts { max-width: 520px; }
+.ic { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.step b .ic { width: 16px; height: 16px; }
+.imp { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 3px 12px #0b4a5414; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.imp-zone { width: 100%; border: 2px dashed var(--hi); border-radius: 14px; background: color-mix(in srgb, var(--hi) 5%, #fff); padding: 18px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--ink); text-align: center; }
+.imp-zone .ic { width: 34px; height: 34px; color: var(--hi); }
+.imp-zone b { font-size: 16px; } .imp-zone small { color: var(--soft); font-size: 13px; }
+.imp-zone:hover, .imp.over .imp-zone { background: color-mix(in srgb, var(--gold) 14%, #fff); border-color: var(--gold); }
+.cls-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.cls-h h2 { margin: 0; font-size: 18px; }
+.ccards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.ccards:empty { display: none; }
+.ccard { position: relative; border: 1.5px solid var(--line); border-radius: 14px; background: var(--field); overflow: hidden; }
+.ccard.on { border: 2px solid var(--hi); background: color-mix(in srgb, var(--hi) 6%, #fff); }
+.cc-main { width: 100%; background: transparent; border: 0; padding: 10px 14px; padding-inline-end: 44px; text-align: right; display: flex; flex-direction: column; gap: 1px; }
+.cc-main .cc { font-size: 17px; direction: ltr; unicode-bidi: embed; text-align: right; }
+.cc-main small { color: var(--soft); font-size: 12.5px; line-height: 1.45; }
+.cc-main small.st { font-weight: 700; }
+.cc-main small.st.miss { color: var(--err); } .cc-main small.st.ok { color: var(--ok); }
+.cc-x { position: absolute; top: 6px; inset-inline-end: 6px; background: transparent; border: 0; color: var(--soft); border-radius: 9px; padding: 4px 8px; font-size: 18px; line-height: 1; }
+.cc-x:hover { color: var(--err); }
+.cc-x.pend { background: var(--err); color: #fff; font-size: 12.5px; font-weight: 700; padding: 6px 10px; }
+.aic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--hi) 12%, #fff); color: var(--hi2); margin-bottom: 4px; }
+.act.on .aic, #kpOpen .aic { background: linear-gradient(135deg, var(--hi), var(--hi2)); color: #fff; }
+.kp.padmode .kp-top { display: none; }
+.kp-colbar { position: relative; padding: 6px 8px 6px 6px; padding-inline-start: 14px; }
+.kp-ttl { display: flex; align-items: baseline; gap: 10px; min-width: 0; font-size: 16px; }
+.kp-ttl b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kp-ttl span { color: var(--cream); font-weight: 700; flex: none; }
+.kp-colbar .kp-cb button { border: 0; background: #ffffff22; color: #fff; width: 38px; height: 34px; padding: 0; display: grid; place-items: center; border-radius: 10px; }
+.kp-menu { position: absolute; top: calc(100% + 6px); inset-inline-end: 6px; z-index: 5; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px #0b4a5433; padding: 4px; display: flex; flex-direction: column; min-width: 190px; }
+.kp-menu button { display: flex; align-items: center; gap: 10px; background: transparent; border: 0; color: var(--ink); padding: 10px 12px; border-radius: 9px; font-weight: 600; text-align: right; }
+.kp-menu button:hover, .kp-menu button[aria-pressed="true"] { background: color-mix(in srgb, var(--hi) 10%, transparent); }
+.kp-pad > .kp-prog { flex: none; margin: 0; }
+.kp-card { text-align: center; padding: 8px 12px 4px; }
+.kp-name { font-size: 22px; }
+.kp-meta { display: flex; justify-content: center; align-items: center; gap: 10px; text-align: center; }
+.kp-cur { font-weight: 700; color: var(--hi2); background: color-mix(in srgb, var(--hi) 12%, #fff); border-radius: 99px; padding: 0 10px; font-variant-numeric: tabular-nums; }
+.kp-cur.empty { display: none; }
+.kp-cur.abs { color: var(--warn); background: var(--note-bg); }
+.kp-card .kp-next { font-size: 12.5px; }
+.kp-after { flex: none; height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--note-bg); color: var(--note-fg); border-radius: 12px; padding: 0 6px 0 12px; padding-inline-start: 12px; visibility: hidden; }
+.kp-after.on { visibility: visible; }
+.kp-aft { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-weight: 600; font-size: 13.5px; }
+.kp-afb { display: flex; gap: 6px; flex: none; }
+.kp-afb button { background: var(--gold); color: #fff; border: 0; border-radius: 10px; height: 36px; padding: 0 12px; font-weight: 700; font-size: 15px; touch-action: manipulation; }
+.kp-bot, .kp-absch { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.kp-absch { grid-template-columns: 1fr 1fr .6fr; }
+.kp-bot button, .kp-absch button { height: 52px; border-radius: 12px; border: 1px solid var(--field-line); background: #fff; color: var(--ink); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+.kp-absch button { font-size: 14px; line-height: 1.25; }
+.kp-bot .ab, .kp-absch .ab { color: var(--warn); }
+.kp-absch #kpAbsX { color: var(--soft); }
+.kp-pad.showlist .kp-fr, .kp-pad.showlist .kp-bot { display: none; }
+.kp-fr { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.kp-fr .kp-zero { background: #fff; border: 1.5px solid var(--hi); color: var(--ink); font-size: 21px; }
+.kp-fr .kp-zero.frac { background: #fffaf0; border-color: var(--gold); font-size: 16px; }
+.kp-fr .kp-zero.sel { background: var(--hi); color: #fff; border-color: var(--hi); }
+.kp-fr button { height: 46px; border-radius: 12px; border: 1px solid var(--soft-btn-line); background: var(--soft-btn); color: var(--soft-btn-fg); font-size: 17px; font-weight: 700; touch-action: manipulation; }
+.kp-fr button[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: #fff; }
+.kp-grid.frac button[data-n] { font-size: 21px; letter-spacing: -.3px; background: #fffaf0; border-color: var(--gold); }
+.kp-grid button.fb { background: var(--soft-btn); border-color: var(--soft-btn-line); color: var(--soft-btn-fg); font-size: 19px; }
+.kp-grid button.fb[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: #fff; }
+.kp-grid .frc { display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+.kp-grid .frc button { flex: 1; min-height: 0; font-size: 16px; }
+.kp-grid.frac button.dis { opacity: .3; }
+@media (min-width: 900px) {
+  .kp-name { font-size: 30px; }
+  .kp-meta { font-size: 15px; }
+  .kp-cur { font-size: 22px; padding: 0 16px; }
+  .kp-card .kp-next { font-size: 14px; }
+}
+[hidden] { display: none !important; }
+</style>
+
+<script>document.documentElement.dir = "rtl"; document.documentElement.lang = "ar";</script>
+<header class="topbar">
+  <div class="in">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="5" y="6" width="22" height="20" rx="3"/><path d="M5 12h22M12 12v14M19 12v14"/><path d="M21 4l4 4-8 8-5 1 1-5z" fill="#0a4f5a"/></svg></div>
+    <div>
+      <div class="bt">EduNotes</div>
+      <div class="bs">النقط والملاحظات</div>
+    </div>
+  </div>
+</header>
+<main class="in" dir="rtl" lang="ar">
+  <section class="imp" id="drop">
+    <input type="file" id="file" accept=".xlsx,application/*" multiple hidden>
+    <button class="imp-zone" id="pick" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b>اسحب ملفات مسار هنا أو اضغط للاختيار</b><small>ملف واحد أو عدة ملفات بصيغة xlsx كما صدّرتها من مسار</small></button>
+    <div class="cls-h" id="clsH" hidden><h2>أقسامي</h2><span class="muted small" id="fname"></span></div>
+    <div class="ccards" id="tabs" role="tablist" aria-label="الأقسام المستوردة"></div>
+    <div class="muted small" id="fmeta"></div>
+    <div class="msg" id="loadmsg" style="white-space:pre-line" role="status"></div>
+  </section>
+
+  <nav class="acts" aria-label="المراحل">
+    <button class="act" id="kpOpen" type="button"><span class="aic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01M8 16h8"/></svg></span><b>إدخال النقط</b><small id="actMarks"></small></button>
+    <button class="act" type="button" data-p="notes"><span class="aic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></span><b>الملاحظات</b><small id="actNotes"></small></button>
+    <button class="act on" type="button" data-p="review"><span class="aic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg></span><b>المراجعة والتحميل</b><small id="actReview">تحميل الملف بالاسم نفسه</small></button>
+    <button class="act" type="button" data-p="settings"><span class="aic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span><b>الإعدادات</b><small>المعدل والخيارات</small></button>
+  </nav>
+
+  <section class="panel" id="pnl-notes" hidden>
+    <div class="step"><b><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></b><h2>الملاحظات</h2></div>
+    <div class="opts" style="margin-bottom:14px">
+      <label class="chk"><input type="checkbox" id="kpNotes"> ملء الملاحظات تلقائياً من النقط</label>
+      <label class="field">لغة الملاحظات
+        <select id="lang"><option value="ar">العربية</option><option value="fr">الفرنسية</option><option value="en">الإنجليزية</option></select>
+      </label>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <button class="btn ghost" type="button" id="p10" aria-pressed="false">سُلَّم 10 (الابتدائي)</button>
+      <button class="btn ghost" type="button" id="p20" aria-pressed="true">سُلَّم 20 (الإعدادي والثانوي)</button>
+    </div>
+    <div class="rulehead"><span>من (فما فوق)</span><span>الملاحظة</span><span></span></div>
+    <div class="rules" id="rules"></div>
+    <div class="row" style="margin-top:10px"><button class="btn ghost" type="button" id="addrule">إضافة قاعدة</button><button class="btn ghost" type="button" id="resetrules">العبارات الافتراضية</button></div>
+  </section>
+
+  <section class="panel" id="pnl-review">
+    <div class="step"><b><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg></b><h2>المراجعة والتحميل</h2><span class="tag sample" id="sampletag">مثال توضيحي</span></div>
+    <div class="legend" id="legend" aria-label="ألوان الملاحظات"></div>
+    <div class="msg" id="summary" role="status"></div>
+    <div class="tablebox" style="margin-top:10px"><table id="tbl"></table></div>
+    <div class="bar">
+      <button class="btn" id="save" type="button" disabled>تحميل الملف بالاسم نفسه</button>
+      <button class="btn ghost" id="saveall" type="button" hidden>تحميل جميع الأقسام</button>
+      <div class="msg" id="savemsg" role="status"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="pnl-settings" hidden>
+    <div class="step"><b><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></b><h2>الإعدادات</h2></div>
+    <div class="opts">
+      <div>
+        <div class="muted" style="font-size:13.5px;margin-bottom:6px">النقط المعتمدة في المعدل</div>
+        <div class="chips" id="cols"></div>
+      </div>
+      <label class="field">النقطة القصوى
+        <input type="number" id="max" min="1" step="1" value="20" style="direction:ltr">
+      </label>
+      <label class="chk"><input type="checkbox" id="keep" checked> لا تغيّر ملاحظة مكتوبة مسبقاً في الملف</label>
+      <label class="chk"><input type="checkbox" id="kpAuto2"> تأكيد تلقائي عند كتابة النقطة بلوحة مفاتيح الحاسوب</label>
+      <label class="field">ملاحظة التلميذ الذي ليست له نقطة
+        <input type="text" id="emptytxt" placeholder="اتركها فارغة لعدم الكتابة">
+      </label>
+    </div>
+  </section>
+  <footer class="dev">
+    <span class="dvl" aria-hidden="true"></span>
+    <b class="mm">M&amp;M</b>
+    <span class="dvf">EduNotes</span>
+  </footer>
+</main>
+<div class="kp" id="kp" hidden role="dialog" aria-modal="true" aria-label="إدخال النقط">
+  <div class="kp-in">
+    <div class="kp-top"><div><b id="kpCls"></b><small id="kpSub"></small></div><button class="kp-close" id="kpClose" type="button">إنهاء</button></div>
+    <div id="kpPick" style="display:flex;flex-direction:column;gap:10px">
+      <div class="kp-msg" id="kpMsg" role="status"></div>
+      <div class="kp-h">اختر الفرض</div>
+      <div class="kp-cols" id="kpCols"></div>
+      <div class="kp-ask" id="kpAsk" hidden>
+        <div id="kpAskTxt"></div>
+        <div class="row"><button class="btn" id="kpOnlyEmpty" type="button">إكمال الفارغة فقط</button><button class="btn ghost" id="kpRedo" type="button">إعادة الكل</button></div>
+      </div>
+    </div>
+    <div id="kpPad" class="kp-pad" hidden>
+      <div class="kp-colbar">
+        <span class="kp-ttl"><b id="kpColName"></b><span id="kpPos"></span></span>
+        <span class="kp-cb"><button id="kpMenuBtn" type="button" aria-label="خيارات" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></svg></button><button id="kpClose2" type="button" aria-label="إنهاء"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
+        <div class="kp-menu" id="kpMenu" hidden><button id="kpListBtn" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>قائمة التلاميذ</button><button id="kpChange" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>تغيير الفرض</button></div>
+      </div>
+      <div class="kp-prog"><i id="kpBar"></i></div>
+      <div class="kp-body">
+        <div class="kp-list" id="kpList" aria-label="قائمة التلاميذ"></div>
+        <div class="kp-main">
+          <div class="kp-card">
+            <div class="kp-name" id="kpName"></div>
+            <div class="kp-meta"><span id="kpCode" dir="ltr"></span><span class="kp-cur" id="kpVal" dir="ltr"></span></div>
+            <div class="kp-prv" id="kpPrvStu"></div>
+            <div class="kp-next" id="kpNext"></div>
+            <div class="kp-err" id="kpErr" role="alert"></div>
+          </div>
+          <div class="kp-grid" id="kpGrid" dir="ltr" aria-label="النقطة"></div>
+          <div class="kp-fr" id="kpFr" dir="ltr" aria-label="الكسور"><button type="button" class="kp-zero" id="kpZero" hidden>0</button><button type="button" data-f="0.25" aria-pressed="false">+0,25</button><button type="button" data-f="0.5" aria-pressed="false">+0,5</button><button type="button" data-f="0.75" aria-pressed="false">+0,75</button></div>
+          <div class="kp-bot" id="kpBot"><button id="kpBackTop" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>تراجع</button><button class="ab" id="kpAbs" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M3 20c0-3.5 3-6 7-6 1.3 0 2.5.3 3.5.8M16 16l5 5M21 16l-5 5"/></svg>غائب</button></div>
+          <div class="kp-absch" id="kpAbsCh" hidden><button class="ab" id="kpAbsJ" type="button">غائب بمبرر</button><button class="ab" id="kpAbs0" type="button">غائب بدون مبرر (0)</button><button id="kpAbsX" type="button">إلغاء</button></div>
+          <div class="kp-act"><button class="ok" id="kpOk" type="button">تأكيد ←</button></div>
+          <div class="kp-hint">اضغط النقطة، أو اكتبها بلوحة المفاتيح ثم اضغط Enter · السهم ↑ للتراجع · الحرف A لغائب بمبرر</div>
+        </div>
+      </div>
+      <div class="kp-prev" id="kpPrev"><div class="kp-prev-h" id="kpPrevH"></div><div class="kp-prev-g" id="kpPrevG"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- helpers ---------- */
+  function colToNum(s) { var n = 0; for (var i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 64); return n; }
+  function numToCol(n) { var s = ""; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+  function esc(t) { return String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") el.textContent = attrs[k]; else if (k === "class") el.className = attrs[k]; else el.setAttribute(k, attrs[k]); }
+    for (var i = 2; i < arguments.length; i++) if (arguments[i]) el.appendChild(arguments[i]);
+    return el;
+  }
+  function $(id) { return document.getElementById(id); }
+  function parseNum(v) {
+    if (v === null || v === undefined || v === "") return NaN;
+    if (typeof v === "number") return v;
+    var s = String(v).trim().replace(",", ".");
+    return s === "" ? NaN : Number(s);
+  }
+
+  /* ---------- xlsx reading ---------- */
+  function parseSst(xml) {
+    var doc = new DOMParser().parseFromString(xml.replace(/^\uFEFF/, ""), "application/xml");
+    var out = [];
+    var sis = doc.getElementsByTagNameNS("*", "si");
+    for (var i = 0; i < sis.length; i++) {
+      var ts = sis[i].getElementsByTagNameNS("*", "t"), s = "";
+      for (var j = 0; j < ts.length; j++) s += ts[j].textContent;
+      out.push(s);
+    }
+    return out;
+  }
+  function parseSheet(xml, sst) {
+    var doc = new DOMParser().parseFromString(xml.replace(/^\uFEFF/, ""), "application/xml");
+    var rows = new Map();
+    var cs = doc.getElementsByTagNameNS("*", "c");
+    for (var i = 0; i < cs.length; i++) {
+      var c = cs[i], ref = c.getAttribute("r") || "", m = /^([A-Z]+)(\d+)$/.exec(ref);
+      if (!m) continue;
+      var t = c.getAttribute("t"), vEl = c.getElementsByTagNameNS("*", "v")[0], val = null;
+      if (t === "s" && vEl) val = sst[Number(vEl.textContent)];
+      else if (t === "inlineStr") { var ts = c.getElementsByTagNameNS("*", "t"), s = ""; for (var j = 0; j < ts.length; j++) s += ts[j].textContent; val = s; }
+      else if (t === "str" && vEl) val = vEl.textContent;
+      else if (vEl && vEl.textContent !== "") val = (t === "b" || t === "e") ? vEl.textContent : Number(vEl.textContent);
+      if (val === null || val === "") continue;
+      var r = Number(m[2]);
+      if (!rows.has(r)) rows.set(r, new Map());
+      rows.get(r).set(colToNum(m[1]), val);
+    }
+    return rows;
+  }
+  function detect(rows) {
+    var keys = Array.from(rows.keys()).sort(function (a, b) { return a - b; });
+    var hr = null, markCols = [];
+    for (var i = 0; i < keys.length && hr === null; i++) {
+      rows.get(keys[i]).forEach(function (v, c) { if (typeof v === "string" && v.trim() === "النقطة") { hr = keys[i]; } });
+    }
+    if (hr === null) return { error: "لم يُعثر على أعمدة «النقطة» في الملف." };
+    rows.get(hr).forEach(function (v, c) { if (typeof v === "string" && v.trim() === "النقطة") markCols.push(c); });
+    markCols.sort(function (a, b) { return a - b; });
+    var absOf = {};
+    markCols.forEach(function (c) { var v = rows.get(hr).get(c + 1); if (typeof v === "string" && v.trim() === "التغيب") absOf[c] = c + 1; });
+    var labels = markCols.map(function (c) {
+      for (var r = hr - 1; r >= 1; r--) { var v = rows.has(r) && rows.get(r).get(c); if (typeof v === "string" && v.trim()) return v.trim(); }
+      return numToCol(c);
+    });
+    var notesCol = null, nameCol = null, idCol = null;
+    keys.forEach(function (r) {
+      if (r > hr) return;
+      rows.get(r).forEach(function (v, c) {
+        if (typeof v !== "string") return;
+        if (v.indexOf("ملاحظ") !== -1 && (notesCol === null || c < notesCol)) notesCol = c;
+        var tv = v.trim();
+        if (r >= hr - 3 && (tv.indexOf("إسم") === 0 || tv.indexOf("اسم") === 0) && nameCol === null) nameCol = c;
+        if (r >= hr - 3 && tv.indexOf("رقم") === 0 && idCol === null) idCol = c;
+      });
+    });
+    if (nameCol === null) nameCol = 4;
+    var classCode = "", subject = "", level = "", assess = "";
+    keys.forEach(function (r) {
+      if (r > hr) return;
+      var row = rows.get(r), cols = Array.from(row.keys()).sort(function (a, b) { return a - b; });
+      cols.forEach(function (c, idx) {
+        var v = row.get(c); if (typeof v !== "string") return;
+        var t = v.trim(), isCls = /^القسم\s*:?$/.test(t), isSub = /^المادة\s*:?$/.test(t), isLvl = /^المستوى\s*:?$/.test(t), isAs = /^نقط\s*:?$/.test(t);
+        if (!isCls && !isSub && !isLvl && !isAs) return;
+        var nx = "";
+        for (var j = idx + 1; j < cols.length && !nx; j++) { var w = row.get(cols[j]); if (typeof w === "string" && w.trim()) nx = w.trim(); else if (typeof w === "number") nx = String(w); }
+        if (isCls && !classCode) classCode = nx;
+        if (isSub && !subject) subject = nx;
+        if (isLvl && !level) level = nx;
+        if (isAs && !assess && !/:\s*$/.test(nx) && !/^(المادة|الاستاذ|الأستاذ|مؤسسة|القسم|المستوى)$/.test(nx)) assess = nx;
+      });
+    });
+    if (notesCol === null) {
+      var what = [classCode, subject, assess].filter(Boolean).join(" – ");
+      return { error: "هذا الملف" + (what ? " (" + what + ")" : "") + " لا يحتوي على عمود «ملاحظات الأستاذ» في مسار، لذلك لا يمكن كتابة ملاحظات فيه، ولم يتغيّر فيه شيء.", fatal: true };
+    }
+    var data = [];
+    keys.forEach(function (r) {
+      if (r <= hr) return;
+      var row = rows.get(r), nm = row.get(nameCol);
+      if (typeof nm !== "string" || !nm.trim()) return;
+      var marks = {}, orig = {}, abs = {}, absOrig = {};
+      markCols.forEach(function (c) {
+        marks[c] = orig[c] = row.has(c) ? row.get(c) : null;
+        if (absOf[c]) { var a = row.get(absOf[c]); abs[c] = absOrig[c] = a == null ? "" : String(a); }
+      });
+      var ex = row.get(notesCol), cd = idCol !== null ? row.get(idCol) : null;
+      data.push({ r: r, name: nm.trim(), code: cd == null ? "" : String(cd), marks: marks, orig: orig, abs: abs, absOrig: absOrig, existing: typeof ex === "string" ? ex : (ex == null ? "" : String(ex)), manual: null });
+    });
+    return { headerRow: hr, absOf: absOf, markCols: markCols, labels: labels, notesCol: notesCol, nameCol: nameCol, data: data, classCode: classCode, subject: subject, level: level, assess: assess };
+  }
+
+  /* ---------- xlsx writing (string patches, nothing re-serialised) ---------- */
+  function patchSst(xml, texts) {
+    var pm = /<(\w+:)?sst\b/.exec(xml), p = pm && pm[1] ? pm[1] : "";
+    var existing = (xml.match(new RegExp("<" + p + "si[\\s>/]", "g")) || []).length, map = {}, add = "", n = 0;
+    texts.forEach(function (t) { if (!(t in map)) { map[t] = existing + n; n++; add += "<" + p + "si><" + p + 't xml:space="preserve">' + esc(t) + "</" + p + "t></" + p + "si>"; } });
+    var out = xml.replace("</" + p + "sst>", add + "</" + p + "sst>");
+    out = out.replace(new RegExp("<" + p + "sst\\b[^>]*>"), function (tag) {
+      tag = tag.replace(/uniqueCount="(\d+)"/, function (_, a) { return 'uniqueCount="' + (Number(a) + n) + '"'; });
+      tag = tag.replace(/\bcount="(\d+)"/, function (_, a) { return 'count="' + (Number(a) + texts.length) + '"'; });
+      return tag;
+    });
+    return { xml: out, map: map };
+  }
+  /* mode: "s" shared strings (needs sstMap), "str" inline value like Massar exports, "inlineStr" */
+  function patchSheet(xml, colLetter, writes, mode, sstMap) {
+    var target = colToNum(colLetter), done = 0;
+    var pm = /<(\w+:)?worksheet\b/.exec(xml), p = pm && pm[1] ? pm[1] : "";
+    writes.forEach(function (w) {
+      var ref = colLetter + w.r;
+      var mkCell = function (style) {
+        var s = style ? ' s="' + style + '"' : "";
+        if (mode === "s") return "<" + p + 'c r="' + ref + '"' + s + ' t="s"><' + p + "v>" + sstMap[w.text] + "</" + p + "v></" + p + "c>";
+        if (mode === "str") return "<" + p + 'c r="' + ref + '"' + s + ' t="str"><' + p + "v>" + esc(w.text) + "</" + p + "v></" + p + "c>";
+        return "<" + p + 'c r="' + ref + '"' + s + ' t="inlineStr"><' + p + "is><" + p + 't xml:space="preserve">' + esc(w.text) + "</" + p + "t></" + p + "is></" + p + "c>";
+      };
+      var rowRe = new RegExp("<" + p + 'row r="' + w.r + '"(?=[\\s>/])([^>]*?)(/>|>([\\s\\S]*?)</' + p + "row>)");
+      xml = xml.replace(rowRe, function (all, rattrs, tail, inner) {
+        if (tail === "/>") { done++; return "<" + p + 'row r="' + w.r + '"' + rattrs + ">" + mkCell("") + "</" + p + "row>"; }
+        var cellRe = new RegExp("<" + p + 'c r="' + ref + '"([^>]*?)(/>|>[\\s\\S]*?</' + p + "c>)");
+        var found = false;
+        inner = inner.replace(cellRe, function (c, cattrs) {
+          found = true;
+          var sm = /\bs="(\d+)"/.exec(cattrs);
+          return mkCell(sm ? sm[1] : "");
+        });
+        if (!found) {
+          var re = new RegExp("<" + p + 'c r="([A-Z]+)\\d+"', "g"), m, at = -1;
+          while ((m = re.exec(inner))) { if (colToNum(m[1]) > target) { at = m.index; break; } }
+          inner = at === -1 ? inner + mkCell("") : inner.slice(0, at) + mkCell("") + inner.slice(at);
+        }
+        done++;
+        return "<" + p + 'row r="' + w.r + '"' + rattrs + ">" + inner + "</" + p + "row>";
+      });
+    });
+    return { xml: xml, count: done };
+  }
+  /* writes several cells per row: type "num" (number), "text" (string, same storage as the file), "clear" (empty, style kept) */
+  function patchCells(xml, cells, mode, sstMap) {
+    var pm = /<(\w+:)?worksheet\b/.exec(xml), p = pm && pm[1] ? pm[1] : "", byRow = {};
+    cells.forEach(function (w) { (byRow[w.r] = byRow[w.r] || []).push(w); });
+    Object.keys(byRow).forEach(function (rk) {
+      var rowRe = new RegExp("<" + p + 'row r="' + rk + '"(?=[\\s>/])([^>]*?)(/>|>([\\s\\S]*?)</' + p + "row>)");
+      xml = xml.replace(rowRe, function (all, rattrs, tail, inner) {
+        if (tail === "/>") inner = "";
+        byRow[rk].forEach(function (w) {
+          var letter = numToCol(w.col), ref = letter + rk;
+          var mk = function (style) {
+            var s = style ? ' s="' + style + '"' : "";
+            if (w.type === "clear") return "<" + p + 'c r="' + ref + '"' + s + "/>";
+            if (w.type === "num") return "<" + p + 'c r="' + ref + '"' + s + "><" + p + "v>" + String(w.val) + "</" + p + "v></" + p + "c>";
+            if (mode === "s") return "<" + p + 'c r="' + ref + '"' + s + ' t="s"><' + p + "v>" + sstMap[w.val] + "</" + p + "v></" + p + "c>";
+            if (mode === "str") return "<" + p + 'c r="' + ref + '"' + s + ' t="str"><' + p + "v>" + esc(w.val) + "</" + p + "v></" + p + "c>";
+            return "<" + p + 'c r="' + ref + '"' + s + ' t="inlineStr"><' + p + "is><" + p + 't xml:space="preserve">' + esc(w.val) + "</" + p + "t></" + p + "is></" + p + "c>";
+          };
+          var cellRe = new RegExp("<" + p + 'c r="' + ref + '"(?=[\\s>/])([^>]*?)(/>|>[\\s\\S]*?</' + p + "c>)"), found = false;
+          inner = inner.replace(cellRe, function (c, cattrs) { found = true; var sm = /\bs="(\d+)"/.exec(cattrs); return mk(sm ? sm[1] : ""); });
+          if (!found) {
+            var re = new RegExp("<" + p + 'c r="([A-Z]+)\\d+"', "g"), m, at = -1;
+            while ((m = re.exec(inner))) { if (colToNum(m[1]) > w.col) { at = m.index; break; } }
+            inner = at === -1 ? inner + mk("") : inner.slice(0, at) + mk("") + inner.slice(at);
+          }
+        });
+        return "<" + p + 'row r="' + rk + '"' + rattrs + ">" + inner + "</" + p + "row>";
+      });
+    });
+    return xml;
+  }
+  window.__t = { parseSst: parseSst, parseSheet: parseSheet, detect: detect, patchSst: patchSst, patchSheet: patchSheet, numToCol: numToCol };
+
+  /* ---------- state ---------- */
+  var PHRASES = {
+    ar: ["مجهودات ونتائج ممتازة", "أعمال مشرفة ونتائج حسنة", "حصيلة مستحسنة عموما", "مجهودات لا بأس بها", "أعمال ونتائج متوسطة", "نتائج ضعيفة، تحتاج إلى مزيد من الجهد"],
+    fr: ["Excellents efforts et résultats", "Travail honorable et bons résultats", "Bilan globalement satisfaisant", "Efforts acceptables", "Travail et résultats moyens", "Résultats faibles, plus d'efforts nécessaires"],
+    en: ["Excellent effort and results", "Commendable work and good results", "Overall satisfactory", "Acceptable effort", "Average work and results", "Weak results, more effort needed"]
+  };
+  var MINS = { 20: [18, 16, 14, 12, 10, 0], 10: [9, 8, 7, 6, 5, 0] };
+  function makeSet(lang, scale) { return MINS[scale].map(function (m, i) { return { min: m, text: PHRASES[lang][i] }; }); }
+  var st = {
+    fileName: "", zip: null, paths: null, isSample: true, max: 20, keep: true, emptyText: "",
+    lang: "ar", scale: 20, autoNotes: true, autoOk: false, quarters: false, sets: {}, rules: [], notesCol: 15, markCols: [], data: [], classes: [], active: null
+  };
+  function getSet(lang, scale) { var k = lang + scale; if (!st.sets[k]) st.sets[k] = makeSet(lang, scale); return st.sets[k]; }
+  try {
+    var saved = JSON.parse(localStorage.getItem("massar-rules3") || "null");
+    if (saved && typeof saved === "object") {
+      if (saved.sets && typeof saved.sets === "object") {
+        Object.keys(saved.sets).forEach(function (k) { if (Array.isArray(saved.sets[k]) && saved.sets[k].length) st.sets[k] = saved.sets[k]; });
+      }
+      if (PHRASES[saved.lang]) st.lang = saved.lang;
+      if (saved.scale === 10 || saved.scale === 20) st.scale = saved.scale;
+      if (saved.max > 0) st.max = saved.max;
+      st.emptyText = saved.emptyText || ""; st.keep = saved.keep !== false;
+      st.autoNotes = saved.autoNotes !== false; st.autoOk = !!saved.autoOk; st.quarters = !!saved.quarters;
+    }
+  } catch (e) {}
+  st.rules = getSet(st.lang, st.scale);
+  function dirFor() { return st.lang === "ar" ? "rtl" : "ltr"; }
+  function persist() {
+    try { localStorage.setItem("massar-rules3", JSON.stringify({ lang: st.lang, scale: st.scale, sets: st.sets, max: st.max, emptyText: st.emptyText, keep: st.keep, autoNotes: st.autoNotes, autoOk: st.autoOk, quarters: st.quarters })); } catch (e) {}
+  }
+  function syncPresetButtons() {
+    [10, 20].forEach(function (k) { $("p" + k).setAttribute("aria-pressed", String(st.scale === k && st.max === k)); });
+  }
+
+  function loadSample() {
+    var names = ["تلميذ 1", "تلميذ 2", "تلميذ 3", "تلميذ 4", "تلميذ 5", "تلميذ 6"];
+    var m = [[17, 16, 18, 19], [13, 12, 11, 14], [10, 9, 11, 10], [6, 7, 5, 8], [3, 4, null, 5], [null, null, null, null]];
+    st.markCols = [7, 9, 11, 13].map(function (c, i) { return { col: c, label: ["الفرض الأول", "الفرض الثاني", "الفرض الثالث", "الأنشطة المندمجة"][i], on: true }; });
+    st.data = names.map(function (n, i) {
+      var marks = {}; st.markCols.forEach(function (mc, k) { marks[mc.col] = m[i][k]; });
+      return { r: 18 + i, name: n, marks: marks, existing: "", manual: null };
+    });
+    st.isSample = true; st.fileName = ""; st.zip = null;
+  }
+
+  /* ---------- computing ---------- */
+  function sortedRules(rules) {
+    return (rules || st.rules).filter(function (r) { return r.text.trim() !== "" && isFinite(Number(r.min)); })
+      .map(function (r) { return { min: Number(r.min), text: r.text.trim() }; })
+      .sort(function (a, b) { return b.min - a.min; });
+  }
+  function compute(row, mcs, cls) {
+    var vals = [], bad = 0, max = cls ? cls.max : st.max, rules = cls ? getSet(st.lang, cls.scale) : st.rules;
+    (mcs || st.markCols).forEach(function (mc) {
+      if (!mc.on) return;
+      var v = parseNum(row.marks[mc.col]);
+      if (!isFinite(v)) return;
+      if (v < 0 || v > max) { bad++; return; }
+      vals.push(v);
+    });
+    var avg = vals.length ? Math.round(vals.reduce(function (a, b) { return a + b; }, 0) / vals.length * 100) / 100 : null;
+    var note = "", kind = "auto";
+    if (row.manual !== null) { note = row.manual; kind = "manual"; }
+    else if (!st.autoNotes) { note = row.existing; kind = row.existing.trim() !== "" ? "keep" : "none"; }
+    else if (st.keep && row.existing.trim() !== "") { note = row.existing; kind = "keep"; }
+    else if (avg === null) { note = st.emptyText.trim(); kind = note ? "auto" : "none"; }
+    else {
+      var rs = sortedRules(rules), hit = rs.filter(function (r) { return avg >= r.min; })[0];
+      note = hit ? hit.text : ""; if (!note) kind = "none";
+    }
+    return { avg: avg, note: note, kind: kind, bad: bad };
+  }
+
+  /* ---------- level colours (by rule rank: top rule = green ... last rule = red) ---------- */
+  function palFor(idx, n) { return n <= 1 ? 0 : Math.round(idx * 5 / (n - 1)); }
+  function levelOfNote(note) {
+    var t = String(note || "").trim().toLowerCase(); if (!t) return -1;
+    var rs = sortedRules();
+    for (var i = 0; i < rs.length; i++) if (rs[i].text.toLowerCase() === t) return palFor(i, rs.length);
+    return -1;
+  }
+  function levelOfAvg(avg) {
+    if (avg === null) return -1;
+    var rs = sortedRules();
+    for (var i = 0; i < rs.length; i++) if (avg >= rs[i].min) return palFor(i, rs.length);
+    return -1;
+  }
+  function renderLegend() {
+    var box = $("legend"); box.textContent = "";
+    var rs = sortedRules();
+    rs.forEach(function (r, i) { box.appendChild(h("span", { class: "lgc lv" + palFor(i, rs.length), dir: dirFor(), text: r.text })); });
+  }
+
+  /* ---------- rendering ---------- */
+  function fmt(n) { return n === null ? "—" : String(n).replace(/\.0+$/, ""); }
+  function renderRules() {
+    var box = $("rules"); box.textContent = "";
+    st.rules.forEach(function (r, i) {
+      var num = h("input", { class: "num", type: "number", step: "0.25", "aria-label": "الحد الأدنى" }); num.value = r.min;
+      var txt = h("input", { class: "txt", type: "text", "aria-label": "الملاحظة", dir: dirFor() }); txt.value = r.text;
+      var x = h("button", { class: "x", type: "button", "aria-label": "حذف القاعدة", text: "×" });
+      num.addEventListener("input", function () { r.min = num.value === "" ? "" : Number(num.value); persist(); renderTable(); });
+      txt.addEventListener("input", function () { r.text = txt.value; persist(); renderTable(); });
+      x.addEventListener("click", function () { st.rules.splice(i, 1); persist(); renderRules(); renderTable(); });
+      box.appendChild(h("div", { class: "rule" }, num, txt, x));
+    });
+  }
+  function renderCols() {
+    var box = $("cols"); box.textContent = "";
+    st.markCols.forEach(function (mc) {
+      var cb = h("input", { type: "checkbox" }); cb.checked = mc.on;
+      cb.addEventListener("change", function () { mc.on = cb.checked; renderTable(); });
+      box.appendChild(h("label", { class: "chip" }, cb, h("span", { text: mc.label })));
+    });
+  }
+  function renderTable() {
+    var t = $("tbl"); t.textContent = "";
+    var head = h("tr", {}, h("th", { text: "#" }), h("th", { text: "التلميذ" }));
+    st.markCols.forEach(function (mc) { head.appendChild(h("th", { text: mc.label })); });
+    head.appendChild(h("th", { text: "المعدل" })); head.appendChild(h("th", { text: "الملاحظة" }));
+    t.appendChild(h("thead", {}, head));
+    var tb = h("tbody"), filled = 0, empty = 0, bad = 0;
+    st.data.forEach(function (row, i) {
+      var c = compute(row); bad += c.bad;
+      if (c.note) filled++; else empty++;
+      var tr = h("tr", {}, h("td", { class: "idx", text: String(i + 1) }), h("td", { text: row.name }));
+      st.markCols.forEach(function (mc) {
+        var v = parseNum(row.marks[mc.col]), ab = !isFinite(v) && mc.abs && row.abs && String(row.abs[mc.col] || "").trim() === "مبرر";
+        tr.appendChild(h("td", { class: "n" + (isFinite(v) ? "" : (ab ? " ab" : " miss")), text: isFinite(v) ? String(v) : (ab ? "مبرر" : "") }));
+      });
+      var ai = levelOfAvg(c.avg), ni = levelOfNote(c.note);
+      tr.appendChild(h("td", { class: "avg" + (ai >= 0 ? " t" + ai : ""), text: fmt(c.avg) }));
+      var inp = h("input", { type: "text", dir: dirFor(), "aria-label": "ملاحظة " + row.name, class: (c.kind === "keep" ? "keep" : (c.kind === "none" ? "none" : "")) + (ni >= 0 ? " lv" + ni : "") });
+      inp.value = c.note;
+      inp.addEventListener("input", function () { row.manual = inp.value; updateSummary(); });
+      tr.appendChild(h("td", { class: "note" }, inp));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    renderLegend();
+    updateSummary(bad, filled, empty);
+  }
+  function countNow() {
+    var filled = 0, empty = 0, bad = 0;
+    st.data.forEach(function (row) { var c = compute(row); bad += c.bad; if (c.note) filled++; else empty++; });
+    return { filled: filled, empty: empty, bad: bad };
+  }
+  function updateSummary() {
+    var c = countNow(), s = $("summary");
+    var pre = st.active ? "القسم " + labelFor(st.active) + ": " : "";
+    var txt = pre + "الملاحظات الجاهزة: " + c.filled + " من " + st.data.length + (c.empty ? "، ودون ملاحظة: " + c.empty : "") + ".";
+    if (c.bad) txt += " نقط خارج المجال من 0 إلى " + st.max + " أُهملت: " + c.bad + ".";
+    s.textContent = txt; s.className = "msg" + (c.bad ? " warn" : "");
+    $("sampletag").hidden = !st.isSample;
+    $("save").disabled = st.isSample;
+    var multi = st.classes.length > 1;
+    $("save").textContent = multi ? "تحميل ملف هذا القسم" : "تحميل الملف بالاسم نفسه";
+    $("saveall").hidden = !multi;
+    var n = st.data.length, nx = null;
+    st.markCols.forEach(function (mc) { if (nx === null && mc.on && fillCount({ data: st.data }, mc) < n) nx = mc; });
+    $("actMarks").textContent = st.isSample ? "استورد ملفاً أولاً" : (nx ? nx.label + ": " + fillCount({ data: st.data }, nx) + " من " + n : "كل النقط مملوءة");
+    $("actNotes").textContent = st.isSample ? "العبارات والقواعد" : "الجاهزة: " + c.filled + " من " + n;
+  }
+
+  /* ---------- file handling ---------- */
+  var uid = 0;
+  async function parseFile(file) {
+    if (typeof JSZip === "undefined") throw new Error("تعذّر تحميل مكتبة القراءة. أعد فتح الصفحة.");
+    var buf = await file.arrayBuffer();
+    var zip = await JSZip.loadAsync(buf);
+    var wbXml = await zip.file("xl/workbook.xml").async("string");
+    var relsXml = await zip.file("xl/_rels/workbook.xml.rels").async("string");
+    var rels = {}, sstPath = null, m, re = /<(?:\w+:)?Relationship\b[^>]*>/g;
+    while ((m = re.exec(relsXml))) {
+      var id = /\bId="([^"]+)"/.exec(m[0]), tg = /\bTarget="([^"]+)"/.exec(m[0]), ty = /\bType="([^"]+)"/.exec(m[0]);
+      if (!id || !tg) continue;
+      var p = tg[1].charAt(0) === "/" ? tg[1].slice(1) : "xl/" + tg[1];
+      rels[id[1]] = p;
+      if (ty && /sharedStrings$/.test(ty[1])) sstPath = p;
+    }
+    var sstXml = sstPath && zip.file(sstPath) ? await zip.file(sstPath).async("string") : null;
+    var sst = sstXml ? parseSst(sstXml) : [];
+    var sheets = [], sre = /<(?:\w+:)?sheet\b[^>]*>/g;
+    while ((m = sre.exec(wbXml))) {
+      var rid = /\br:id="([^"]+)"/.exec(m[0]), nm = /\bname="([^"]*)"/.exec(m[0]);
+      if (rid && rels[rid[1]]) sheets.push({ name: nm ? nm[1] : "", path: rels[rid[1]] });
+    }
+    var found = null, lastErr = "";
+    for (var i = 0; i < sheets.length && !found; i++) {
+      var f = zip.file(sheets[i].path); if (!f) continue;
+      var sx = await f.async("string");
+      var dd = detect(parseSheet(sx, sst));
+      if (dd.error) { if (dd.fatal || !lastErr) lastErr = dd.error; } else found = { d: dd, path: sheets[i].path, name: sheets[i].name, xml: sx };
+    }
+    if (!found) throw new Error(lastErr || "تعذّر التعرّف على بنية الملف.");
+    var d = found.d;
+    if (!d.data.length) throw new Error("لا يوجد تلاميذ في الملف.");
+    var nameRef = numToCol(d.nameCol) + d.data[0].r, tm = new RegExp("<(?:\\w+:)?c r=\"" + nameRef + "\"[^>]*?\\bt=\"(\\w+)\"").exec(found.xml);
+    var mode = tm && tm[1] === "str" ? "str" : (sstXml ? "s" : "inlineStr");
+    var mcs = d.markCols.map(function (c, i) { return { col: c, abs: d.absOf[c] || null, label: d.labels[i], on: true }; });
+    /* scale: the file's own 0..N limit on mark cells when present, else the level (primary = 10, others = 20) */
+    var fmax = null, mcLetters = d.markCols.map(numToCol), dvRe = /<(?:\w+:)?dataValidation\b[^>]*\bsqref="([^"]*)"[^>]*>([\s\S]*?)<\/(?:\w+:)?dataValidation>/g, dv;
+    while ((dv = dvRe.exec(found.xml))) {
+      var hitCol = dv[1].split(/\s+/).some(function (rg) { var cm = /^([A-Z]+)\d/.exec(rg); return cm && mcLetters.indexOf(cm[1]) !== -1; });
+      var f2 = /<(?:\w+:)?formula2>\s*([\d.]+)\s*</.exec(dv[2]);
+      if (hitCol && f2 && Number(f2[1]) > 0) { fmax = Number(f2[1]); break; }
+    }
+    var scale = fmax === 10 || (fmax === null && /ابتدائي/.test(d.level)) ? 10 : 20;
+    var withMarks = d.data.filter(function (r) { return mcs.some(function (mc) { return isFinite(parseNum(r.marks[mc.col])); }); }).length;
+    return { id: ++uid, fileName: file.name, buf: buf, paths: { sheet: found.path, sst: sstPath, mode: mode }, notesCol: d.notesCol,
+      markCols: mcs, data: d.data, code: d.classCode, subject: d.subject, assess: d.assess, level: d.level, scale: scale, max: fmax || scale, sheetName: found.name, withMarks: withMarks, pending: false };
+  }
+
+  function labelFor(cls) {
+    var base = cls.code || (/(\d[A-Za-z]+-\d+)/.exec(cls.fileName) || [])[1] || cls.fileName.replace(/\.xlsx$/i, "");
+    var idx = st.classes.indexOf(cls), before = 0;
+    for (var i = 0; i < idx; i++) if ((st.classes[i].code || "") === (cls.code || "") && st.classes[i].subject === cls.subject) before++;
+    return before ? base + " (" + (before + 1) + ")" : base;
+  }
+  function updateMeta() {
+    $("fname").textContent = st.classes.length ? "عدد الأقسام: " + st.classes.length : "";
+    $("fmeta").textContent = st.active ? "القسم المفتوح: " + labelFor(st.active) + " · الورقة «" + st.active.sheetName + "» · عمود الملاحظات: " + numToCol(st.active.notesCol)
+      : "الجدول أدناه مثال بنقط وهمية إلى أن تستورد ملفك.";
+
+  }
+  function renderTabs() {
+    var box = $("tabs"); box.textContent = ""; $("clsH").hidden = !st.classes.length;
+    st.classes.forEach(function (cls) {
+      var on = cls === st.active, n = cls.data.length, nx = null;
+      cls.markCols.forEach(function (mc) { if (nx === null && mc.on && fillCount(cls, mc) < n) nx = mc; });
+      var main = h("button", { class: "cc-main", type: "button", role: "tab", "aria-selected": String(on) },
+        h("b", { class: "cc", text: labelFor(cls) }),
+        h("small", { text: [cls.subject, cls.assess, "/" + cls.max, "عدد التلاميذ: " + n].filter(Boolean).join(" • ") }),
+        h("small", { class: "st " + (nx ? "miss" : "ok"), text: nx ? nx.label + ": " + fillCount(cls, nx) + " من " + n : "النقط مكتملة" }));
+      main.addEventListener("click", function () { if (cls !== st.active) activate(cls); });
+      var x = h("button", { class: "cc-x" + (cls.pending ? " pend" : ""), type: "button", "aria-label": "حذف القسم " + labelFor(cls), text: cls.pending ? "تأكيد الحذف" : "×" });
+      x.addEventListener("click", function () {
+        if (cls.pending) { deleteClass(cls); return; }
+        cls.pending = true; renderTabs();
+        setTimeout(function () { if (cls.pending) { cls.pending = false; renderTabs(); } }, 4000);
+      });
+      box.appendChild(h("div", { class: "ccard" + (on ? " on" : "") }, main, x));
+    });
+  }
+  function activate(cls) {
+    st.active = cls; st.markCols = cls.markCols; st.data = cls.data; st.isSample = false; st.fileName = cls.fileName;
+    st.scale = cls.scale; st.max = cls.max; st.rules = getSet(st.lang, cls.scale); $("max").value = st.max;
+    syncPresetButtons(); renderRules();
+    renderCols(); renderTable(); renderTabs(); updateMeta();
+  }
+  function deleteClass(cls) {
+    var idx = st.classes.indexOf(cls); if (idx < 0) return;
+    dbDel(cls.fileName); clearEntries(cls);
+    st.classes.splice(idx, 1);
+    $("savemsg").textContent = "";
+    if (st.active === cls) {
+      var next = st.classes[idx] || st.classes[idx - 1];
+      if (next) { activate(next); return; }
+      st.active = null; loadSample(); $("loadmsg").textContent = "";
+      renderCols(); renderTable();
+    } else { renderTable(); }
+    renderTabs(); updateMeta();
+  }
+  async function openFiles(list) {
+    var lm = $("loadmsg"), files = Array.from(list).filter(function (f) { return /\.xlsx$/i.test(f.name); });
+    if (!files.length) { lm.className = "msg err"; lm.textContent = "اختر ملفات بصيغة xlsx."; return; }
+    lm.className = "msg"; lm.textContent = "جارٍ قراءة الملفات…"; $("savemsg").textContent = "";
+    var added = [], errs = [], nomarks = [];
+    for (var i = 0; i < files.length; i++) {
+      try {
+        var cls = await parseFile(files[i]);
+        cls.restored = restoreEntries(cls);
+        var ex = -1; st.classes.forEach(function (c, k) { if (c.fileName === cls.fileName) ex = k; });
+        if (ex >= 0) st.classes[ex] = cls; else st.classes.push(cls);
+        dbPut(cls);
+        added.push(cls);
+      } catch (e) { errs.push(files[i].name + ": " + (e && e.message ? e.message : e)); }
+    }
+    added.forEach(function (c) { if (!c.withMarks && !c.restored) nomarks.push(c); });
+    var lines = [];
+    if (added.length) lines.push(added.length === 1 ? "تمت قراءة القسم." : "تمت قراءة الأقسام: " + added.length + ".");
+    added.forEach(function (c) { if (c.restored) lines.push("القسم " + labelFor(c) + ": استُرجعت نقط أدخلتها سابقاً (" + c.restored + ")."); });
+    nomarks.forEach(function (c) { lines.push("القسم " + labelFor(c) + " لا يحتوي على نقط بعد. أدخلها من «إدخال النقط»."); });
+    errs.forEach(function (e) { lines.push("تعذّر فتح " + e); });
+    lm.className = "msg " + (errs.length ? "err" : (nomarks.length ? "warn" : "ok")); lm.textContent = lines.join("\n");
+    if (added.length) activate(added[0]); else renderTabs();
+  }
+
+  async function saveBlob(blob, name) {
+    var dl = null;
+    try { if (typeof window.claude !== "undefined" && window.claude && window.claude.use) dl = await window.claude.use("downloads"); } catch (e) { dl = null; }
+    if (dl) { await dl.save({ filename: name, data: blob }); return; }
+    var url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name; a.style.display = "none";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  }
+
+  /* builds the class file: only the notes cells (and the shared-strings list when the file uses it) change */
+  /* builds the class file: only the mark, absence and notes cells that changed (and the shared-strings list when the file uses it) are touched */
+  async function buildClass(cls) {
+    var cells = [], texts = [], notes = 0, marks = 0;
+    cls.data.forEach(function (row) {
+      cls.markCols.forEach(function (mc) {
+        if (!sameVal(row.marks[mc.col], row.orig[mc.col])) {
+          var v = parseNum(row.marks[mc.col]);
+          cells.push({ r: row.r, col: mc.col, type: isFinite(v) ? "num" : "clear", val: v }); marks++;
+        }
+        if (mc.abs && tr(row.abs[mc.col]) !== tr(row.absOrig[mc.col])) {
+          var a = tr(row.abs[mc.col]);
+          if (a) { cells.push({ r: row.r, col: mc.abs, type: "text", val: a }); texts.push(a); }
+          else cells.push({ r: row.r, col: mc.abs, type: "clear" });
+        }
+      });
+      var c = compute(row, cls.markCols, cls);
+      if (c.kind === "keep" || !c.note || row.existing === c.note) return;
+      cells.push({ r: row.r, col: cls.notesCol, type: "text", val: c.note }); texts.push(c.note); notes++;
+    });
+    if (!cells.length) return null;
+    var zip = await JSZip.loadAsync(cls.buf), sstMap = null;
+    if (cls.paths.mode === "s" && texts.length) {
+      var sstXml = await zip.file(cls.paths.sst).async("string");
+      var ps = patchSst(sstXml, texts);
+      sstMap = ps.map; zip.file(cls.paths.sst, ps.xml);
+    }
+    var sheetXml = await zip.file(cls.paths.sheet).async("string");
+    zip.file(cls.paths.sheet, patchCells(sheetXml, cells, cls.paths.mode, sstMap));
+    var blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    return { blob: blob, count: notes, marks: marks, letter: numToCol(cls.notesCol) };
+  }
+  function doneText(r) {
+    var p = [];
+    if (r.marks) p.push("النقط المكتوبة: " + r.marks);
+    if (r.count) p.push("الملاحظات المكتوبة: " + r.count + " (العمود " + r.letter + ")");
+    return "جُهّز الملف. " + (p.join("، ") || "كُتبت التغييرات") + ". وبقي كل شيء آخر كما هو.";
+  }
+  function errText(e) { return e && e.code === "declined" ? "أُلغي التحميل." : "تعذّر التحميل: " + (e && e.message ? e.message : e); }
+
+  async function exportFile() {
+    var sm = $("savemsg"); sm.className = "msg"; sm.textContent = "";
+    var cls = st.active; if (!cls) return;
+    try {
+      var r = await buildClass(cls);
+      if (!r) { sm.className = "msg warn"; sm.textContent = "لا توجد نقط أو ملاحظات جديدة للكتابة."; return; }
+      await saveBlob(r.blob, cls.fileName);
+      sm.className = "msg ok"; sm.textContent = doneText(r);
+    } catch (e) { sm.className = "msg err"; sm.textContent = errText(e); }
+  }
+  async function exportAll() {
+    var sm = $("savemsg"); sm.className = "msg"; sm.textContent = "جارٍ تجهيز الملفات…";
+    var done = 0, skipped = [];
+    try {
+      for (var i = 0; i < st.classes.length; i++) {
+        var cls = st.classes[i], r = await buildClass(cls);
+        if (!r) { skipped.push(labelFor(cls) + (cls.subject ? " (" + cls.subject + ")" : "")); continue; }
+        await saveBlob(r.blob, cls.fileName); done++;
+        await new Promise(function (res) { setTimeout(res, 500); });
+      }
+      sm.className = "msg " + (done ? "ok" : "warn");
+      sm.textContent = (done ? "جُهّزت الملفات بأسمائها الأصلية: " + done + "." : "لا توجد نقط أو ملاحظات جديدة للكتابة.") + (skipped.length && done ? " دون تغييرات: " + skipped.join("، ") + "." : "");
+    } catch (e) { sm.className = "msg err"; sm.textContent = (done ? "جُهّز " + done + " من الملفات قبل التوقف. " : "") + errText(e); }
+  }
+
+  /* ---------- saved classes: the imported files stay in this browser (IndexedDB) until deleted with × ---------- */
+  var DB = null;
+  function idb() {
+    return new Promise(function (res) {
+      try {
+        var rq = indexedDB.open("teacher-notes", 1);
+        rq.onupgradeneeded = function () { rq.result.createObjectStore("files", { keyPath: "name" }); };
+        rq.onsuccess = function () { res(rq.result); }; rq.onerror = function () { res(null); };
+      } catch (e) { res(null); }
+    });
+  }
+  async function dbOp(mode, fn) {
+    try {
+      if (!DB) DB = await idb(); if (!DB) return null;
+      return await new Promise(function (res) {
+        var tx = DB.transaction("files", mode), r = fn(tx.objectStore("files"));
+        tx.oncomplete = function () { res(r ? r.result : null); }; tx.onerror = tx.onabort = function () { res(null); };
+      });
+    } catch (e) { return null; }
+  }
+  function dbPut(cls) { return dbOp("readwrite", function (s) { return s.put({ name: cls.fileName, buf: cls.buf.slice(0), t: Date.now() }); }); }
+  function dbDel(name) { return dbOp("readwrite", function (s) { return s.delete(name); }); }
+  function dbAll() { return dbOp("readonly", function (s) { return s.getAll(); }); }
+  async function loadSaved() {
+    var list = await dbAll(); if (!list || !list.length) return;
+    list.sort(function (a, b) { return a.t - b.t; });
+    var n = 0;
+    for (var i = 0; i < list.length; i++) {
+      try {
+        var it = list[i], cls = await parseFile({ name: it.name, arrayBuffer: function () { return Promise.resolve(this.b); }, b: it.buf });
+        restoreEntries(cls); st.classes.push(cls); n++;
+      } catch (e) {}
+    }
+    if (!n) return;
+    var lm = $("loadmsg"); lm.className = "msg ok"; lm.textContent = n === 1 ? "فُتح قسمك المحفوظ." : "فُتحت أقسامك المحفوظة: " + n + ".";
+    activate(st.classes[0]);
+  }
+
+  /* ---------- keypad entry (marks typed on the phone, written back into the same Massar cells) ---------- */
+  var ABS = "مبرر";
+  function tr(v) { return v == null ? "" : String(v).trim(); }
+  function sameVal(a, b) { var x = parseNum(a), y = parseNum(b); if (!isFinite(x) && !isFinite(y)) return true; return x === y; }
+  function isAbs(row, mc) { return !!(mc.abs && row.abs && tr(row.abs[mc.col]) === ABS); }
+  function isFilled(row, mc) { return isFinite(parseNum(row.marks[mc.col])) || isAbs(row, mc); }
+  function fillCount(cls, mc) { return cls.data.filter(function (r) { return isFilled(r, mc); }).length; }
+  function saveKey(cls) { return "tn-ent:" + cls.fileName + "|" + (cls.subject || "") + "|" + (cls.assess || ""); }
+  function persistEntries(cls) {
+    var o = {}, any = false;
+    cls.data.forEach(function (row) {
+      cls.markCols.forEach(function (mc) {
+        var a = mc.abs ? tr(row.abs[mc.col]) : "", ao = mc.abs ? tr(row.absOrig[mc.col]) : "";
+        if (sameVal(row.marks[mc.col], row.orig[mc.col]) && a === ao) return;
+        (o[row.r] = o[row.r] || { n: row.name, v: {} }).v[mc.col] = [row.marks[mc.col], a, row.orig[mc.col], ao]; any = true;
+      });
+    });
+    try { if (any) localStorage.setItem(saveKey(cls), JSON.stringify(o)); else localStorage.removeItem(saveKey(cls)); } catch (e) {}
+  }
+  function clearEntries(cls) { try { localStorage.removeItem(saveKey(cls)); } catch (e) {} }
+  /* restores marks typed earlier for the same file, only where the file still holds what it held then */
+  function restoreEntries(cls) {
+    var o = null, n = 0;
+    try { o = JSON.parse(localStorage.getItem(saveKey(cls)) || "null"); } catch (e) {}
+    if (!o || typeof o !== "object") return 0;
+    cls.data.forEach(function (row) {
+      var e = o[row.r]; if (!e || e.n !== row.name || !e.v) return;
+      cls.markCols.forEach(function (mc) {
+        var v = e.v[mc.col]; if (!v) return;
+        if (!sameVal(v[2], row.orig[mc.col]) || (mc.abs && tr(v[3]) !== tr(row.absOrig[mc.col]))) return;
+        row.marks[mc.col] = v[0]; if (mc.abs) row.abs[mc.col] = v[1] || ""; n++;
+      });
+    });
+    return n;
+  }
+
+  var kp = { cls: null, mc: null, queue: [], qi: 0, buf: "", fresh: true, absent: false, pending: null, timer: null };
+  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms || 15); } catch (e) {} }
+  function openKp() {
+    if (!st.active) { var lm = $("loadmsg"); lm.className = "msg warn"; lm.textContent = "استورد ملف مسار أولاً، ثم أدخل النقط."; return; }
+    kp.cls = st.active; $("kpMsg").textContent = "";
+    $("kp").hidden = false; document.body.style.overflow = "hidden"; showPick();
+  }
+  function closeKp() {
+    clearTimeout(kp.timer); $("kp").hidden = true; document.body.style.overflow = "";
+    if (kp.cls === st.active) { renderTable(); renderTabs(); } else if (kp.cls) activate(kp.cls);
+  }
+  function showPick() {
+    clearTimeout(kp.timer);
+    $("kpPick").hidden = false; $("kpPad").hidden = true; $("kpAsk").hidden = true; setList(false); $("kp").classList.remove("padmode"); $("kpMenu").hidden = true; hideAfter();
+    var cls = kp.cls, n = cls.data.length, sug = null;
+    $("kpCls").textContent = labelFor(cls);
+    $("kpSub").textContent = [cls.subject, cls.assess].filter(Boolean).concat(["/" + cls.max]).join(" • ");
+    var box = $("kpCols"); box.textContent = "";
+    cls.markCols.forEach(function (mc) { if (sug === null && fillCount(cls, mc) < n) sug = mc; });
+    cls.markCols.forEach(function (mc) {
+      var f = fillCount(cls, mc), s = f === n ? "مكتمل" : (f === 0 ? "فارغ" : f + " من " + n);
+      var b = h("button", { type: "button", class: "kp-col" + (mc === sug ? " sug" : "") + (f === n ? " full" : "") }, h("b", { text: mc.label }), h("small", { text: s + (mc === sug ? " • مقترَح" : "") }));
+      b.addEventListener("click", function () { pickCol(mc); });
+      box.appendChild(b);
+    });
+  }
+  function pickCol(mc) {
+    var cls = kp.cls, n = cls.data.length, f = fillCount(cls, mc);
+    if (f === 0) { startPad(mc, false); return; }
+    kp.pending = mc;
+    $("kpAskTxt").textContent = "«" + mc.label + "»: " + (f === n ? "مكتمل (" + n + " من " + n + ")." : "المملوء " + f + " من " + n + ".") + " ماذا تريد؟";
+    $("kpOnlyEmpty").hidden = f === n;
+    $("kpRedo").textContent = f === n ? "مراجعة الكل من البداية" : "إعادة الكل";
+    $("kpAsk").hidden = false;
+  }
+  function startPad(mc, onlyEmpty) {
+    var cls = kp.cls, all = cls.data.map(function (r, i) { return i; });
+    kp.mc = mc; kp.queue = all.filter(function (i) { return !onlyEmpty || !isFilled(cls.data[i], mc); });
+    if (!kp.queue.length) kp.queue = all;
+    kp.qi = 0; $("kpPick").hidden = true; $("kpPad").hidden = false; $("kpColName").textContent = mc.label;
+    $("kpAbsJ").disabled = !mc.abs; $("kpMsg").textContent = "";
+    $("kp").classList.add("padmode"); buildGrid(); hideAfter(); showStudent();
+  }
+  function curRow() { return kp.cls.data[kp.queue[kp.qi]]; }
+  function showStudent() {
+    clearTimeout(kp.timer);
+    var row = curRow(), mc = kp.mc, total = kp.cls.data.length, idx = kp.queue[kp.qi];
+    $("kpPos").textContent = (idx + 1) + " من " + total;
+    $("kpCode").textContent = row.code || "";
+    $("kpName").textContent = row.name;
+    var v = parseNum(row.marks[mc.col]);
+    kp.buf = isFinite(v) ? String(v).replace(".", ",") : ""; kp.fresh = true; kp.absent = isAbs(row, mc);
+    $("kpErr").textContent = "";
+    var pv = kp.queue[kp.qi - 1], pr = pv !== undefined ? kp.cls.data[pv] : null;
+    $("kpPrvStu").textContent = pr ? "السابق: " + pr.name + " (" + (isAbs(pr, mc) ? "مبرر" : (isFinite(parseNum(pr.marks[mc.col])) ? String(parseNum(pr.marks[mc.col])).replace(".", ",") : "—")) + ")" : "";
+    var nx = kp.queue[kp.qi + 1];
+    $("kpNext").textContent = nx !== undefined ? "التالي: " + kp.cls.data[nx].name : "آخر تلميذ في القائمة";
+    $("kpBar").style.width = Math.round(fillCount(kp.cls, mc) / total * 100) + "%";
+    $("kpAbsCh").hidden = true; $("kpBot").hidden = false; setFrac(0);
+    renderVal(); renderList(); renderPrev(); markGrid();
+  }
+  function renderVal() {
+    var el = $("kpVal");
+    el.classList.remove("empty", "abs");
+    if (kp.absent && kp.buf === "") { el.textContent = "غائب بمبرر"; el.classList.add("abs"); }
+    else if (kp.buf === "") { el.textContent = "—"; el.classList.add("empty"); }
+    else el.textContent = kp.buf;
+  }
+  function renderList() {
+    var box = $("kpList"), mc = kp.mc, cur = kp.queue[kp.qi], curEl = null; box.textContent = "";
+    kp.cls.data.forEach(function (row, i) {
+      var ab = isAbs(row, mc), v = parseNum(row.marks[mc.col]);
+      var b = h("button", { type: "button", class: "kp-li" + (ab ? " ab" : (isFinite(v) ? "" : " miss")) + (i === cur ? " cur" : "") },
+        h("span", {}, h("i", { text: String(i + 1) }), document.createTextNode(row.name)), h("b", { text: ab ? "مبرر" : (isFinite(v) ? String(v).replace(".", ",") : "") }));
+      b.addEventListener("click", function () {
+        var q = kp.queue.indexOf(i);
+        if (q < 0) { kp.queue = kp.cls.data.map(function (r, k) { return k; }); q = i; }
+        kp.qi = q; setList(false); showStudent();
+      });
+      if (i === cur) curEl = b;
+      box.appendChild(b);
+    });
+    if (curEl) box.scrollTop = Math.max(0, curEl.offsetTop - box.clientHeight / 2 + curEl.offsetHeight / 2);
+  }
+  /* desktop preview under the pad: every pupil of the class with the mark of the chosen test; a tap opens that pupil */
+  function renderPrev() {
+    var box = $("kpPrevG"), mc = kp.mc, cur = kp.queue[kp.qi], n = kp.cls.data.length, f = fillCount(kp.cls, mc), curEl = null;
+    $("kpPrevH").textContent = "معاينة «" + mc.label + "»: المملوء " + f + " من " + n + (n - f ? " · الناقص " + (n - f) : " · مكتمل");
+    box.textContent = "";
+    kp.cls.data.forEach(function (row, i) {
+      var ab = isAbs(row, mc), v = parseNum(row.marks[mc.col]);
+      var b = h("button", { type: "button", class: "kp-pc " + (ab ? "ab" : (isFinite(v) ? "ok" : "ms")) + (i === cur ? " cur" : "") },
+        h("i", { text: String(i + 1) }), h("b", { text: ab ? "غ" : (isFinite(v) ? String(v).replace(".", ",") : "") }));
+      b.title = row.name + (ab ? " — غائب بمبرر" : (isFinite(v) ? " — " + String(v).replace(".", ",") : " — بدون نقطة"));
+      b.addEventListener("click", function () {
+        var q = kp.queue.indexOf(i);
+        if (q < 0) { kp.queue = kp.cls.data.map(function (r, k) { return k; }); q = i; }
+        kp.qi = q; showStudent();
+      });
+      if (i === cur) curEl = b;
+      box.appendChild(b);
+    });
+    if (curEl && box.clientHeight) { var top = curEl.offsetTop - box.offsetTop; if (top < box.scrollTop || top > box.scrollTop + box.clientHeight - curEl.offsetHeight) box.scrollTop = Math.max(0, top - box.clientHeight / 2); }
+  }
+  function setList(on) { $("kpPad").classList.toggle("showlist", on); $("kpListBtn").setAttribute("aria-pressed", String(on)); if (on) renderList(); }
+  function kpErr(t) {
+    $("kpErr").textContent = t; buzz(60);
+    var el = $("kpVal"); el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
+    setTimeout(function () { el.classList.remove("shake"); }, 300);
+  }
+  function numOf(s) { return Number(String(s).replace(",", ".")); }
+  function setBuf(nb) {
+    var max = kp.cls.max, parts = nb.split(",");
+    if (parts.length > 2 || (parts[1] && parts[1].length > 2)) return false;
+    var v = numOf(nb.replace(/,$/, ""));
+    if (!isFinite(v) || v > max) { kpErr("النقطة القصوى هي " + max); return false; }
+    kp.buf = nb; kp.fresh = false; kp.absent = false; $("kpErr").textContent = ""; renderVal(); return true;
+  }
+  function autoCheck() {
+    if (!st.autoOk) return;
+    var b = kp.buf, max = kp.cls.max, ready = false;
+    if (b.indexOf(",") === -1) ready = b !== "" && (numOf(b) * 10 > max || b.length >= 2);
+    else { var d = b.split(",")[1]; ready = d.length === 2 || (d.length === 1 && d !== "2" && d !== "7"); }
+    if (ready) { clearTimeout(kp.timer); kp.timer = setTimeout(confirmVal, 280); }
+  }
+  function press(k) {
+    clearTimeout(kp.timer);
+    var b = kp.fresh ? "" : kp.buf;
+    if (k === "del") {
+      if (kp.absent && kp.buf === "") kp.absent = false; else kp.buf = kp.fresh ? "" : kp.buf.slice(0, -1);
+      kp.fresh = false; $("kpErr").textContent = ""; renderVal(); return;
+    }
+    if (k === ",") { if (b.indexOf(",") !== -1) return; if (b !== "" && numOf(b) >= kp.cls.max) { kpErr("النقطة القصوى هي " + kp.cls.max); return; } setBuf((b === "" ? "0" : b) + ","); return; }
+    if (k.charAt(0) === ".") {
+      var base = b === "" ? 0 : Math.floor(numOf(b.replace(/,$/, ""))), v = base + Number("0" + k);
+      if (v > kp.cls.max) { kpErr("النقطة القصوى هي " + kp.cls.max); return; }
+      kp.buf = String(v).replace(".", ","); kp.fresh = false; kp.absent = false; $("kpErr").textContent = ""; renderVal();
+      if (st.autoOk) kp.timer = setTimeout(confirmVal, 280);
+      return;
+    }
+    if (setBuf(b === "0" ? k : b + k)) autoCheck();
+  }
+  function confirmVal() {
+    clearTimeout(kp.timer);
+    var row = curRow(), mc = kp.mc;
+    if (kp.absent && kp.buf === "") { row.marks[mc.col] = null; row.abs[mc.col] = ABS; }
+    else {
+      if (kp.buf === "" || kp.buf === "0,") { kpErr("أدخل النقطة أو اختر «غائب»"); return; }
+      var v = numOf(kp.buf.replace(/,$/, ""));
+      if (!isFinite(v) || v < 0 || v > kp.cls.max) { kpErr("النقطة يجب أن تكون بين 0 و " + kp.cls.max); return; }
+      row.marks[mc.col] = Math.round(v * 100) / 100;
+      if (mc.abs && isAbs(row, mc)) row.abs[mc.col] = "";
+    }
+    buzz(15); persistEntries(kp.cls);
+    if (kp.qi < kp.queue.length - 1) { kp.qi++; showStudent(); return; }
+    var miss = kp.cls.data.length - fillCount(kp.cls, mc);
+    showPick();
+    $("kpMsg").textContent = "انتهى إدخال «" + mc.label + "»." + (miss ? " عدد التلاميذ دون نقطة: " + miss + "." : " الفرض مكتمل.");
+  }
+  /* model A: one tap per student on a ready-made mark; an optional fraction is chosen first */
+  kp.frac = 0;
+  function buildGrid() {
+    /* 0..max in rows (4 per row up to 10, 6 per row up to 20); the fraction keys fill the empty cells after the last mark */
+    var box = $("kpGrid"), max = Math.floor(kp.cls.max), cols = max <= 10 ? 4 : 6; box.textContent = "";
+    var wide = window.matchMedia && window.matchMedia("(min-width: 900px) and (min-aspect-ratio: 1/1)").matches;
+    box.parentNode.classList.toggle("rulerm", !!wide);
+    if (wide) {
+      /* desktop "ruler": the marks in wide rows (0-10 in one row, 0-20 in three rows of seven); fractions, absent and undo in the row below */
+      cols = (max + 1) % 7 === 0 ? 7 : (max + 1 <= 12 ? max + 1 : Math.ceil((max + 1) / 2));
+      box.style.gridTemplateColumns = "repeat(" + cols + ", minmax(0, 1fr))";
+      for (var m = 0; m <= max; m++) (function (n) {
+        var b = h("button", { type: "button", "data-n": String(n), text: String(n) });
+        b.addEventListener("click", function () { tapMark(n); });
+        box.appendChild(b);
+      })(m);
+      $("kpFr").hidden = false; box.classList.add("ruler");
+      return;
+    }
+    box.classList.remove("ruler");
+    box.style.gridTemplateColumns = "repeat(" + cols + ", minmax(0, 1fr))";
+    for (var n = 0; n <= max; n++) (function (n) {
+      var b = h("button", { type: "button", "data-n": String(n), text: String(n) });
+      b.addEventListener("click", function () { tapMark(n); });
+      box.appendChild(b);
+    })(n);
+    var empty = (cols - (max + 1) % cols) % cols, fr = [0.25, 0.5, 0.75];
+    function fb(f) {
+      var b = h("button", { type: "button", class: "fb", "data-f": String(f), "aria-pressed": "false", text: "+" + String(f).replace(".", ",") });
+      b.addEventListener("click", function () { setFrac(kp.frac === f ? 0 : f); markGrid(); });
+      return b;
+    }
+    if (empty >= 3) fr.forEach(function (f, k) { var b = fb(f); if (k === 2 && empty > 3) b.style.gridColumn = "span " + (empty - 2); box.appendChild(b); });
+    else if (empty > 0) { var st2 = h("div", { class: "frc" }); if (empty > 1) st2.style.gridColumn = "span " + empty; fr.forEach(function (f) { st2.appendChild(fb(f)); }); box.appendChild(st2); }
+    $("kpFr").hidden = empty > 0;
+  }
+  function markGrid() {
+    var row = curRow(), v = parseNum(row.marks[kp.mc.col]), max = kp.cls.max;
+    Array.prototype.forEach.call($("kpGrid").querySelectorAll("[data-n]"), function (b) {
+      var n = Number(b.getAttribute("data-n"));
+      b.classList.toggle("sel", isFinite(v) && v === n + kp.frac);
+      b.classList.toggle("dis", n + kp.frac > max);
+      b.textContent = kp.frac ? String(n + kp.frac).replace(".", ",") : String(n);
+    });
+    $("kpGrid").classList.toggle("frac", !!kp.frac);
+    var z = $("kpZero"); z.textContent = kp.frac ? String(kp.frac).replace(".", ",") : "0";
+    z.classList.toggle("sel", isFinite(v) && v === kp.frac); z.classList.toggle("frac", !!kp.frac);
+  }
+  function setFrac(f) {
+    kp.frac = f;
+    Array.prototype.forEach.call(document.querySelectorAll("#kpFr [data-f], #kpGrid [data-f]"), function (b) { b.setAttribute("aria-pressed", String(Number(b.getAttribute("data-f")) === f)); });
+  }
+  /* fractions: press +0,25 / +0,5 / +0,75 and the pad shows that fraction on every mark; it goes back to whole marks after one tap */
+  function tapMark(n) {
+    var v = n + kp.frac;
+    if (v > kp.cls.max) { kpErr("النقطة القصوى هي " + kp.cls.max); return; }
+    kp.absent = false; kp.buf = String(v).replace(".", ","); renderVal();
+    clearTimeout(kp.timer); kp.timer = setTimeout(confirmVal, 90);
+  }
+  function hideAfter() {}
+  function goBack() { if (kp.qi > 0) { kp.qi--; showStudent(); } }
+  $("kpAbs").addEventListener("click", function () { hideAfter(); $("kpBot").hidden = true; $("kpAbsCh").hidden = false; });
+  $("kpAbsX").addEventListener("click", function () { $("kpAbsCh").hidden = true; $("kpBot").hidden = false; });
+  $("kpBackTop").addEventListener("click", function () { hideAfter(); goBack(); });
+  $("kpZero").addEventListener("click", function () { tapMark(0); });
+  try {
+    window.matchMedia("(min-width: 900px) and (min-aspect-ratio: 1/1)").addEventListener("change", function () {
+      if (!$("kpPad").hidden && kp.mc) { buildGrid(); setFrac(kp.frac); markGrid(); }
+    });
+  } catch (e) {}
+  $("kpClose2").addEventListener("click", closeKp);
+  $("kpMenuBtn").addEventListener("click", function () { var m = $("kpMenu"); m.hidden = !m.hidden; $("kpMenuBtn").setAttribute("aria-expanded", String(!m.hidden)); });
+  Array.prototype.forEach.call($("kpFr").querySelectorAll("[data-f]"), function (b) {
+    b.addEventListener("click", function () { var f = Number(b.getAttribute("data-f")); setFrac(kp.frac === f ? 0 : f); markGrid(); });
+  });
+  $("kpOpen").addEventListener("click", openKp);
+  $("kpClose").addEventListener("click", closeKp);
+  $("kpChange").addEventListener("click", function () { $("kpMenu").hidden = true; showPick(); });
+  $("kpOnlyEmpty").addEventListener("click", function () { startPad(kp.pending, true); });
+  $("kpRedo").addEventListener("click", function () { startPad(kp.pending, false); });
+  $("kpOk").addEventListener("click", confirmVal);
+  $("kpListBtn").addEventListener("click", function () { $("kpMenu").hidden = true; hideAfter(); setList(!$("kpPad").classList.contains("showlist")); });
+  $("kpAbsJ").addEventListener("click", function () { if (!kp.mc.abs) return; kp.absent = true; kp.buf = ""; confirmVal(); });
+  $("kpAbs0").addEventListener("click", function () { kp.absent = false; kp.buf = "0"; confirmVal(); });
+  $("kpAuto2").addEventListener("change", function () { st.autoOk = $("kpAuto2").checked; persist(); });
+  $("kpNotes").addEventListener("change", function () { st.autoNotes = $("kpNotes").checked; persist(); renderTable(); });
+  function showPanel(p) {
+    ["notes", "review", "settings"].forEach(function (k) { $("pnl-" + k).hidden = k !== p; });
+    Array.prototype.forEach.call(document.querySelectorAll(".act[data-p]"), function (b) { b.classList.toggle("on", b.getAttribute("data-p") === p); });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".act[data-p]"), function (b) {
+    b.addEventListener("click", function () { showPanel(b.getAttribute("data-p")); var el = $("pnl-" + b.getAttribute("data-p")); if (el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" }); });
+  });
+  $("resetrules").addEventListener("click", function () { st.sets[st.lang + st.scale] = makeSet(st.lang, st.scale); st.rules = st.sets[st.lang + st.scale]; persist(); renderRules(); renderTable(); });
+  document.addEventListener("keydown", function (e) {
+    if ($("kp").hidden || $("kpPad").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if (/^[0-9]$/.test(k)) press(k);
+    else if (k === "ArrowUp") goBack();
+    else if (k === "a" || k === "A" || k === "ش") { if (kp.mc.abs) { kp.absent = true; kp.buf = ""; confirmVal(); } }
+    else if (k === "," || k === ".") press(",");
+    else if (k === "Backspace") press("del");
+    else if (k === "Enter") confirmVal();
+    else return;
+    e.preventDefault();
+  });
+
+  /* ---------- wiring ---------- */
+  var fileInput = $("file");
+  $("pick").addEventListener("click", function () { fileInput.click(); });
+  fileInput.addEventListener("change", function () { var fl = Array.from(fileInput.files); fileInput.value = ""; if (fl.length) openFiles(fl); });
+  var drop = $("drop");
+  ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+  drop.addEventListener("drop", function (e) { if (e.dataTransfer.files.length) openFiles(e.dataTransfer.files); });
+
+  function setPreset(k) {
+    st.scale = k; st.max = k; $("max").value = k; st.rules = getSet(st.lang, k);
+    if (st.active) { st.active.scale = k; st.active.max = k; }
+    persist(); renderRules(); syncPresetButtons(); renderTable();
+  }
+  function setLang(l) {
+    st.lang = l; st.rules = getSet(l, st.scale);
+    st.data.forEach(function (r) { r.manual = null; });
+    st.classes.forEach(function (c) { c.data.forEach(function (r) { r.manual = null; }); });
+    persist(); renderRules(); renderTable();
+  }
+  $("p20").addEventListener("click", function () { setPreset(20); });
+  $("p10").addEventListener("click", function () { setPreset(10); });
+  $("lang").addEventListener("change", function () { setLang($("lang").value); });
+  $("addrule").addEventListener("click", function () { st.rules.push({ min: 0, text: "" }); renderRules(); });
+  $("max").addEventListener("input", function () { var v = Number($("max").value); if (v > 0) { st.max = v; if (st.active) st.active.max = v; persist(); syncPresetButtons(); renderTable(); } });
+  $("keep").addEventListener("change", function () { st.keep = $("keep").checked; persist(); renderTable(); });
+  $("emptytxt").addEventListener("input", function () { st.emptyText = $("emptytxt").value; persist(); renderTable(); });
+  $("save").addEventListener("click", exportFile);
+  $("saveall").addEventListener("click", exportAll);
+
+  loadSample();
+  $("max").value = st.max; $("lang").value = st.lang; syncPresetButtons(); $("keep").checked = st.keep; $("emptytxt").value = st.emptyText;
+  $("fname").textContent = "لم يُختر ملف بعد";
+  $("fmeta").textContent = "الجدول أدناه مثال بنقط وهمية إلى أن تستورد ملفك.";
+  $("kpNotes").checked = st.autoNotes; $("kpAuto2").checked = st.autoOk;
+  renderRules(); renderCols(); renderTable();
+  loadSaved();
+})();
+</script>
+
+<script>
+  /* installable app: offline cache through the service worker (GitHub Pages / any https host) */
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+  }
+</script>
+</body></html>
