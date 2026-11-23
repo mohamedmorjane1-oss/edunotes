@@ -939,6 +939,9 @@ td.n.ab { color: var(--warn); font-size: 12px; }
     var dl = null;
     try { if (typeof window.claude !== "undefined" && window.claude && window.claude.use) dl = await window.claude.use("downloads"); } catch (e) { dl = null; }
     if (dl) { await dl.save({ filename: name, data: blob }); return; }
+    /* inside a framed page (Claude) without the download permission a link click is silently blocked: say so instead of reporting success */
+    var inFrame = true; try { inFrame = window.top !== window.self; } catch (e) {}
+    if (inFrame) throw new Error("التحميل غير متاح في هذه النافذة. افتح التطبيق من رابطه مباشرة ثم أعد المحاولة.");
     var url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = name; a.style.display = "none";
     document.body.appendChild(a); a.click(); a.remove();
@@ -977,11 +980,11 @@ td.n.ab { color: var(--warn); font-size: 12px; }
     var blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     return { blob: blob, count: notes, marks: marks, letter: numToCol(cls.notesCol) };
   }
-  function doneText(r) {
+  function doneText(r, name) {
     var p = [];
     if (r.marks) p.push("النقط المكتوبة: " + r.marks);
     if (r.count) p.push("الملاحظات المكتوبة: " + r.count + " (العمود " + r.letter + ")");
-    return "جُهّز الملف. " + (p.join("، ") || "كُتبت التغييرات") + ". وبقي كل شيء آخر كما هو.";
+    return "حُفظ الملف «" + name + "». " + (p.join("، ") || "كُتبت التغييرات") + ". وبقي كل شيء آخر كما هو.";
   }
   function errText(e) { return e && e.code === "declined" ? "أُلغي التحميل." : "تعذّر التحميل: " + (e && e.message ? e.message : e); }
 
@@ -992,7 +995,7 @@ td.n.ab { color: var(--warn); font-size: 12px; }
       var r = await buildClass(cls);
       if (!r) { sm.className = "msg warn"; sm.textContent = "لا توجد نقط أو ملاحظات جديدة للكتابة."; return; }
       await saveBlob(r.blob, cls.fileName);
-      sm.className = "msg ok"; sm.textContent = doneText(r);
+      sm.className = "msg ok"; sm.textContent = doneText(r, cls.fileName);
     } catch (e) { sm.className = "msg err"; sm.textContent = errText(e); }
   }
   async function exportAll() {
@@ -1006,8 +1009,8 @@ td.n.ab { color: var(--warn); font-size: 12px; }
         await new Promise(function (res) { setTimeout(res, 500); });
       }
       sm.className = "msg " + (done ? "ok" : "warn");
-      sm.textContent = (done ? "جُهّزت الملفات بأسمائها الأصلية: " + done + "." : "لا توجد نقط أو ملاحظات جديدة للكتابة.") + (skipped.length && done ? " دون تغييرات: " + skipped.join("، ") + "." : "");
-    } catch (e) { sm.className = "msg err"; sm.textContent = (done ? "جُهّز " + done + " من الملفات قبل التوقف. " : "") + errText(e); }
+      sm.textContent = (done ? "حُفظت الملفات بأسمائها الأصلية: " + done + "." : "لا توجد نقط أو ملاحظات جديدة للكتابة.") + (skipped.length && done ? " دون تغييرات: " + skipped.join("، ") + "." : "");
+    } catch (e) { sm.className = "msg err"; sm.textContent = (done ? "حُفظ " + done + " من الملفات قبل التوقف. " : "") + errText(e); }
   }
 
   /* ---------- saved classes: the imported files stay in this browser (IndexedDB) until deleted with × ---------- */
